@@ -30,53 +30,26 @@ public class ActivityConfig {
         return mToolbarColor;
     }
 
-    public void setToolbarColor(int toolbarColor) {
+    public ActivityConfig setToolbarColor(int toolbarColor) {
         mToolbarColor = toolbarColor;
+        return this;
     }
 
     public boolean useToolbar() {
         return mUseToolbar;
     }
 
-    public void setUseToolbar(boolean useToolbar) {
+    public ActivityConfig setUseToolbar(boolean useToolbar) {
         mUseToolbar = useToolbar;
+        return this;
     }
 
     public boolean isLinearRoot() {
         return mIsLinearRoot;
     }
 
-    public void setIsLinearRoot(boolean isLinearRoot) {
+    public ActivityConfig setIsLinearRoot(boolean isLinearRoot) {
         mIsLinearRoot = isLinearRoot;
-    }
-
-    public class Builder {
-        private ActivityConfig mConfig;
-
-        public Builder() {
-            mConfig = ActivityConfig.newInstance();
-        }
-
-        public ActivityConfig useToolbar(boolean useToolbar) {
-            mUseToolbar = useToolbar;
-            return mConfig;
-        }
-
-        public ActivityConfig toolbarColor(@ColorInt int color) {
-            mToolbarColor = color;
-            return mConfig;
-        }
-
-        public ActivityConfig linearRoot(boolean isLinearRoot) {
-            mIsLinearRoot = isLinearRoot;
-            return mConfig;
-        }
-
-        public ActivityConfig build() {
-            if (mConfig == null) {
-                mConfig = new ActivityConfig();
-            }
-            return mConfig;
-        }
+        return this;
     }
 }

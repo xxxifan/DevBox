@@ -23,16 +23,10 @@ public class BasePagerActivity extends BaseActivity {
     private PagerSlidingTabStrip mPagerStrip;
     private BasePagerAdapter mPagerAdapter;
 
-    private boolean mUseToolbar = true;
-
-    protected void useToolbar(boolean useToolbar) {
-        mUseToolbar = useToolbar;
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.view_base_pager, mUseToolbar);
+        setContentView(R.layout.view_base_pager);
         setupViewPager(initFragments(savedInstanceState));
     }
 
