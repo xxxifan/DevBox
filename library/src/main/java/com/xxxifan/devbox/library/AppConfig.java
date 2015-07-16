@@ -8,7 +8,6 @@ import android.preference.PreferenceManager;
  * Created by xifan on 15-7-14.
  */
 public class AppConfig {
-    public static final boolean TRANSLUCENT_BAR_ENABLED = true;
 
     private AppConfig() {
     }

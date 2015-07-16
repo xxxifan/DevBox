@@ -12,7 +12,6 @@ import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
-import com.xxxifan.devbox.library.AppConfig;
 import com.xxxifan.devbox.library.R;
 import com.xxxifan.devbox.library.helpers.ActivityConfig;
 import com.xxxifan.devbox.library.helpers.SystemBarTintManager;
@@ -29,7 +28,7 @@ public abstract class BaseActivity extends AppCompatActivity {
     private ActivityConfig mConfig;
     private SystemBarTintManager mSystemBarManager;
 
-    protected ActivityConfig getActivityConfig() {
+    protected ActivityConfig getConfig() {
         if (mConfig == null) {
             mConfig = ActivityConfig.newInstance(this);
         }
@@ -44,7 +43,7 @@ public abstract class BaseActivity extends AppCompatActivity {
 
     @Override
     public void setContentView(int layoutResID) {
-        setContentView(layoutResID, getActivityConfig());
+        setContentView(layoutResID, getConfig());
     }
 
     protected void setContentView(int layoutResID, ActivityConfig config) {
@@ -72,7 +71,7 @@ public abstract class BaseActivity extends AppCompatActivity {
         if (toolbar != null) {
             toolbar.setBackgroundColor(themeColor);
             setSupportActionBar(toolbar);
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setDisplayHomeAsUpEnabled(getConfig().showHomeAsUpKey());
         }
 
         // set compat status color in kitkat or later devices
@@ -80,7 +79,7 @@ public abstract class BaseActivity extends AppCompatActivity {
             if (mSystemBarManager == null) {
                 mSystemBarManager = new SystemBarTintManager(this);
             }
-            mSystemBarManager.setStatusBarTintEnabled(AppConfig.TRANSLUCENT_BAR_ENABLED);
+            mSystemBarManager.setStatusBarTintEnabled(true);
             mSystemBarManager.setTintColor(themeColor);
         }
 

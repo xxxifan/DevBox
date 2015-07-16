@@ -21,6 +21,7 @@ public class ActivityConfig {
     private int mToolbarColor;
     private boolean mUseToolbar;
     private boolean mIsLinearRoot;
+    private boolean mShowHomeAsUpKey;
 
     private ActivityConfig(BaseActivity activity) {
         mActivity = new WeakReference<>(activity);
@@ -30,6 +31,7 @@ public class ActivityConfig {
         ActivityConfig config = new ActivityConfig(activity);
         config.setToolbarColor(AppDelegate.get().getResources().getColor(R.color.colorPrimary));
         config.setUseToolbar(true);
+        config.setShowHomeAsUpKey(true);
         config.setIsLinearRoot(true);
         config.setTranslucentStatusBar(true);
         return config;
@@ -50,6 +52,15 @@ public class ActivityConfig {
 
     public ActivityConfig setUseToolbar(boolean useToolbar) {
         mUseToolbar = useToolbar;
+        return this;
+    }
+
+    public boolean showHomeAsUpKey() {
+        return mShowHomeAsUpKey;
+    }
+
+    public ActivityConfig setShowHomeAsUpKey(boolean enable) {
+        mShowHomeAsUpKey = enable;
         return this;
     }
 
