@@ -4,7 +4,6 @@ import android.content.Context;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.ColorInt;
-import android.support.annotation.ColorRes;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -13,11 +12,11 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import com.xxxifan.devbox.library.AppConfig;
 import com.xxxifan.devbox.library.R;
-import com.xxxifan.devbox.library.SystemBarTintManager;
+import com.xxxifan.devbox.library.helpers.ActivityConfig;
+import com.xxxifan.devbox.library.helpers.SystemBarTintManager;
 
 import butterknife.ButterKnife;
 
@@ -28,15 +27,13 @@ public abstract class BaseActivity extends AppCompatActivity {
 
     protected Context mContext;
 
+    private ActivityConfig mConfig;
     private SystemBarTintManager mSystemBarManager;
-    private TextView mTitleView;
-    private int mThemeColor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         setupSystemBar();
         super.onCreate(savedInstanceState);
-
         mContext = this;
     }
 
@@ -51,37 +48,19 @@ public abstract class BaseActivity extends AppCompatActivity {
 
     @Override
     public void setContentView(int layoutResID) {
-        setContentView(layoutResID, true);
+        setContentView(layoutResID, getActivityConfig());
     }
 
-    protected void setContentView(int layoutResID, boolean useToolbar) {
-        setContentView(layoutResID, useToolbar, true, useToolbar ? getResources().getColor(R.color
-                .colorPrimary) : 0);
-    }
-
-    /**
-     * @param layoutResID layout id
-     * @param colorResId  toolbar color resource id
-     */
-    protected void setContentView(int layoutResID, @ColorRes int colorResId) {
-        setContentView(layoutResID, true, true, getResources().getColor(colorResId));
-    }
-
-    /**
-     * @param isLinear use LinearLayout or FrameLayout for toolbar and content
-     * @param color    toolbar color
-     */
-    protected void setContentView(int layoutResID, boolean useToolbar, boolean isLinear, @ColorInt int
-            color) {
-        if (useToolbar) {
-            super.setContentView(isLinear ? R.layout.activity_toolbar : R.layout.activity_toolbar_nest);
+    protected void setContentView(int layoutResID, ActivityConfig config) {
+        if (config.useToolbar()) {
+            super.setContentView(config.isLinearRoot() ? R.layout.activity_toolbar : R.layout.activity_toolbar_nest);
             View view = getLayoutInflater().inflate(layoutResID, null, false);
-            if (isLinear) {
+            if (config.isLinearRoot()) {
                 ((LinearLayout) findViewById(R.id.toolbar_container)).addView(view);
             } else {
                 ((FrameLayout) findViewById(R.id.toolbar_container)).addView(view, 0);
             }
-            setupToolbar(color);
+            setupToolbar(config.getToolbarColor());
         } else {
             super.setContentView(layoutResID);
         }
@@ -97,17 +76,8 @@ public abstract class BaseActivity extends AppCompatActivity {
         if (toolbar != null) {
             toolbar.setBackgroundColor(themeColor);
             setSupportActionBar(toolbar);
-            ActionBar bar = getSupportActionBar();
-            if (bar != null && mTitleView == null) {
-                View view = findViewById(R.id.toolbar_title);
-                if (view != null) {
-                    mTitleView = (TextView) view;
-                }
-
-                bar.setDisplayHomeAsUpEnabled(true);
-            }
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
-        getSupportActionBar().setDisplayShowTitleEnabled(false);
 
         // set compat status color in kitkat or later devices
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
@@ -118,32 +88,7 @@ public abstract class BaseActivity extends AppCompatActivity {
             mSystemBarManager.setTintColor(themeColor);
         }
 
-        mThemeColor = themeColor;
         return toolbar;
-    }
-
-    @Override
-    protected void onTitleChanged(CharSequence title, int color) {
-        super.onTitleChanged(title, color);
-        if (mTitleView != null) {
-            mTitleView.setText(title);
-        }
-    }
-
-    protected void hideToolBar() {
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.hide();
-            mTitleView.setVisibility(View.GONE);
-        }
-    }
-
-    protected void showToolBar() {
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            getSupportActionBar().show();
-            mTitleView.setVisibility(View.VISIBLE);
-        }
     }
 
     @Override
@@ -155,12 +100,29 @@ public abstract class BaseActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    protected TextView getTitleView() {
-        return mTitleView;
+    protected void hideToolBar() {
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.hide();
+        }
     }
 
-    protected int getThemeColor() {
-        return mThemeColor;
+    protected void showToolBar() {
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.show();
+        }
+    }
+
+    protected ActivityConfig getActivityConfig() {
+        if (mConfig == null) {
+            mConfig = ActivityConfig.newInstance();
+        }
+        return mConfig;
+    }
+
+    protected void setActivityConfig(ActivityConfig config) {
+        mConfig = config;
     }
 
     protected abstract void initView();

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.xxxifan.devbox.library;
+package com.xxxifan.devbox.library.helpers;
 
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
