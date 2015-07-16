@@ -11,7 +11,7 @@ import com.xxxifan.devbox.library.ui.BaseActivity;
 import java.lang.ref.WeakReference;
 
 /**
- * Created by xifan on 15-7-16.
+ * Visual configs for BaseActivity, set all customizations here.
  */
 public class ActivityConfig {
 

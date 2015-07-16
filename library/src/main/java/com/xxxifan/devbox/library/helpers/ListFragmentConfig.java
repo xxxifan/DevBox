@@ -3,7 +3,7 @@ package com.xxxifan.devbox.library.helpers;
 import com.xxxifan.devbox.library.R;
 
 /**
- * Created by xifan on 15-7-16.
+ * Visual configs for BaseRecyclerFragment
  */
 public class ListFragmentConfig {
     private boolean mEnableScrollListener;
