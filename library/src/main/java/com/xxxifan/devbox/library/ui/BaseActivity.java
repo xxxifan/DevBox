@@ -9,7 +9,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
@@ -30,20 +29,17 @@ public abstract class BaseActivity extends AppCompatActivity {
     private ActivityConfig mConfig;
     private SystemBarTintManager mSystemBarManager;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        setupSystemBar();
-        super.onCreate(savedInstanceState);
-        mContext = this;
+    protected ActivityConfig getActivityConfig() {
+        if (mConfig == null) {
+            mConfig = ActivityConfig.newInstance(this);
+        }
+        return mConfig;
     }
 
-    /**
-     * set system bar translucent effect
-     */
-    protected void setupSystemBar() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-        }
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        mContext = this;
     }
 
     @Override
@@ -112,17 +108,6 @@ public abstract class BaseActivity extends AppCompatActivity {
         if (actionBar != null) {
             actionBar.show();
         }
-    }
-
-    protected ActivityConfig getActivityConfig() {
-        if (mConfig == null) {
-            mConfig = ActivityConfig.newInstance();
-        }
-        return mConfig;
-    }
-
-    protected void setActivityConfig(ActivityConfig config) {
-        mConfig = config;
     }
 
     protected abstract void initView();

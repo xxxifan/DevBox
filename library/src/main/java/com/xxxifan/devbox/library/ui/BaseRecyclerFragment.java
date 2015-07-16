@@ -10,6 +10,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.xxxifan.devbox.library.R;
+import com.xxxifan.devbox.library.helpers.ListFragmentConfig;
 
 
 /**
@@ -33,19 +34,17 @@ public abstract class BaseRecyclerFragment extends BaseFragment {
     private SwipeRefreshLayout mRefreshLayout;
     private LayoutInflater mInflater;
 
-    private boolean mEnableRefreshLayout;
-    private boolean mEnableScrollListener = true;
-    private boolean mPostRefresh;
-    private int mLayoutId;
+    private ListFragmentConfig mConfig;
 
     private int mLastId = REQUEST_NO_ID;
-    private boolean mIsDataEnd = false;
+    private boolean mIsDataEnd;
+    private boolean mPostRefresh;
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setLayoutResId(mEnableRefreshLayout ? R.layout.fragment_base_recycler_swipe : R.layout
-                .fragment_base_recycler);
+    protected ListFragmentConfig getConfig() {
+        if (mConfig == null) {
+            mConfig = ListFragmentConfig.newInstance();
+        }
+        return mConfig;
     }
 
     @SuppressWarnings("ResourceType")
@@ -53,7 +52,7 @@ public abstract class BaseRecyclerFragment extends BaseFragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         mInflater = inflater;
-        View view = inflater.inflate(mLayoutId, container, false);
+        View view = inflater.inflate(getConfig().getLayoutResId(), container, false);
 
         // setup recycler view
         View childView = view.findViewById(R.id.fragment_recycler_view);
@@ -62,7 +61,7 @@ public abstract class BaseRecyclerFragment extends BaseFragment {
         }
         mRecyclerView = (RecyclerView) childView;
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        if (mEnableScrollListener) {
+        if (getConfig().isEnableScrollListener()) {
             mRecyclerView.addOnScrollListener(new ScrollListener());
         }
 
@@ -137,26 +136,6 @@ public abstract class BaseRecyclerFragment extends BaseFragment {
         if (mRefreshLayout != null) {
             mRefreshLayout.setRefreshing(false);
         }
-    }
-
-    /**
-     * set custom layout, call it before onCreateView();
-     */
-    protected void setLayoutResId(int id) {
-        mLayoutId = id;
-    }
-
-    /**
-     * Enable SwipeRefreshLayout, ensure it be in onAttach().
-     *
-     * @param enable
-     */
-    protected void enableSwipeRefreshLayout(boolean enable) {
-        mEnableRefreshLayout = enable;
-    }
-
-    protected void enableScrollListener(boolean enable) {
-        mEnableScrollListener = enable;
     }
 
     @Override

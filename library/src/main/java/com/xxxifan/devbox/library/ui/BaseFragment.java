@@ -19,7 +19,7 @@ public class BaseFragment extends Fragment {
 
     private MaterialDialog mLoadingDialog;
 
-    private String mTitle = "";
+    private String mTabTitle = "";
     private boolean mIsDataLoaded = false;
     private boolean mLazyLoad = false;
 
@@ -58,6 +58,18 @@ public class BaseFragment extends Fragment {
         ButterKnife.unbind(this);
     }
 
+    protected Context getContext() {
+        return mContext;
+    }
+
+    /**
+     * Called when fragment initialized with a Bundle in onCreate().
+     */
+    public void onBundleReceived(Bundle data) {
+        String title = data.getString(Keys.EXTRA_TITLE);
+        mTabTitle = TextUtils.isEmpty(title) ? "" : title;
+    }
+
     /**
      * for pager fragments, better to load data when user visible, that's time to setLazyDataLoad to
      * true.
@@ -93,20 +105,12 @@ public class BaseFragment extends Fragment {
         mIsDataLoaded = value;
     }
 
-    public String getTitle() {
-        return mTitle;
+    public String getTabTitle() {
+        return mTabTitle;
     }
 
-    public void setTitle(String title) {
-        mTitle = title;
-    }
-
-    /**
-     * Called when fragment initialized with a Bundle in onCreate().
-     */
-    public void onBundleReceived(Bundle data) {
-        String title = data.getString(Keys.EXTRA_TITLE);
-        mTitle = TextUtils.isEmpty(title) ? "" : title;
+    public void setTabTitle(String title) {
+        mTabTitle = title;
     }
 
     protected MaterialDialog getLoadingDialog() {
@@ -135,7 +139,4 @@ public class BaseFragment extends Fragment {
         }
     }
 
-    protected Context getContext() {
-        return mContext;
-    }
 }
