@@ -1,5 +1,5 @@
 # DevBox
-A simple app framework for myself.
+A simple app framework.
 
 # Feature
 For now it's really SIMPLE. I have those classes to quicker development:
