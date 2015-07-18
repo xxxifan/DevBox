@@ -34,5 +34,6 @@ dependencies {
     compile 'com.squareup.okhttp:okhttp:2.3.0'
     compile 'com.jakewharton:butterknife:7.0.1'
     compile 'com.nineoldandroids:library:2.4.0'
+    compile 'com.google.code.gson:gson:2.3.1'
 
 }
