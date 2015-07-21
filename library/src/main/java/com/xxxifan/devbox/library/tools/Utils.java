@@ -1,4 +1,4 @@
-package com.xxxifan.devbox.library.utils;
+package com.xxxifan.devbox.library.tools;
 
 import com.xxxifan.devbox.library.AppDelegate;
 

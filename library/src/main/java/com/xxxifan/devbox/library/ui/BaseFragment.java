@@ -7,7 +7,7 @@ import android.text.TextUtils;
 
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.xxxifan.devbox.library.Keys;
-import com.xxxifan.devbox.library.utils.ViewUtils;
+import com.xxxifan.devbox.library.tools.ViewUtils;
 
 import butterknife.ButterKnife;
 

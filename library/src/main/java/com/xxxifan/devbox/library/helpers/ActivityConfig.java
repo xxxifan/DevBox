@@ -41,7 +41,7 @@ public class ActivityConfig {
         return mToolbarColor;
     }
 
-    public ActivityConfig setToolbarColor(int toolbarColor) {
+    public ActivityConfig setToolbarColor(@ColorInt int toolbarColor) {
         mToolbarColor = toolbarColor;
         return this;
     }

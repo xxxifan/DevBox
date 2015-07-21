@@ -1,4 +1,4 @@
-package com.xxxifan.devbox.library.utils;
+package com.xxxifan.devbox.library.tools;
 
 import com.google.gson.Gson;
 import com.squareup.okhttp.Cache;
@@ -16,14 +16,14 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by xifan on 15-7-17.
  */
-public class HttpUtils {
+public class HttpClient {
     public static final MediaType MEDIA_TYPE_JSON = MediaType.parse("application/json; charset=utf-8");
     public static final MediaType MEDIA_TYPE_PNG = MediaType.parse("image/png");
 
     private static OkHttpClient sHttpClient;
     private static Gson mGson;
 
-    private HttpUtils() {
+    private HttpClient() {
     }
 
     public static OkHttpClient getHttpClient() {
