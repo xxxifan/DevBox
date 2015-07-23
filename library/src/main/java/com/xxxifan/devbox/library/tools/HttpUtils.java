@@ -16,14 +16,14 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by xifan on 15-7-17.
  */
-public class HttpClient {
+public class HttpUtils {
     public static final MediaType MEDIA_TYPE_JSON = MediaType.parse("application/json; charset=utf-8");
     public static final MediaType MEDIA_TYPE_PNG = MediaType.parse("image/png");
 
     private static OkHttpClient sHttpClient;
     private static Gson mGson;
 
-    private HttpClient() {
+    private HttpUtils() {
     }
 
     public static OkHttpClient getHttpClient() {

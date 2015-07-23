@@ -8,6 +8,7 @@ import android.widget.Toast;
 import com.squareup.okhttp.Callback;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
+import com.xxxifan.devbox.library.tools.HttpUtils;
 import com.xxxifan.devbox.library.ui.BaseActivity;
 
 import java.io.IOException;
