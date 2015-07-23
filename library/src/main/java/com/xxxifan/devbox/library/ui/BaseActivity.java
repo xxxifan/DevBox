@@ -23,8 +23,6 @@ import butterknife.ButterKnife;
  */
 public abstract class BaseActivity extends AppCompatActivity {
 
-    protected Context mContext;
-
     private ActivityConfig mConfig;
     private SystemBarTintManager mSystemBarManager;
 
@@ -38,7 +36,6 @@ public abstract class BaseActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mContext = this;
     }
 
     @Override
@@ -107,6 +104,10 @@ public abstract class BaseActivity extends AppCompatActivity {
         if (actionBar != null) {
             actionBar.show();
         }
+    }
+
+    protected Context getContext() {
+        return this;
     }
 
     protected abstract void initView();

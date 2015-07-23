@@ -95,4 +95,9 @@ public class ActivityConfig {
         }
         return this;
     }
+
+    public ActivityConfig setTheme(int resId) {
+        mActivity.get().setTheme(resId);
+        return this;
+    }
 }

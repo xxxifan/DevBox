@@ -21,13 +21,18 @@ android {
     }
     buildTypes {
         release {
+            minifyEnabled true
+            proguardFile '/home/xifan/projects/DevBox/library/proguard-rules.pro'
+        }
+        debug {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.config
         }
         debug {
             signingConfig signingConfigs.config
         }
+    }
+    productFlavors {
     }
     productFlavors {
     }
