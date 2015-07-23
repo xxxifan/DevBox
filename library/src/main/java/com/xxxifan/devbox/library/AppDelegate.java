@@ -13,6 +13,10 @@ public class AppDelegate {
     }
 
     public static Application get() {
+        if (sApplication == null) {
+            throw new IllegalStateException("Application instance is null, please check you have " +
+                    "correct config");
+        }
         return sApplication;
     }
 

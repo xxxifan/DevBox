@@ -22,6 +22,7 @@ public class ActivityConfig {
     private boolean mUseToolbar;
     private boolean mIsLinearRoot;
     private boolean mShowHomeAsUpKey;
+    private boolean mTransparentBar;
 
     private ActivityConfig(BaseActivity activity) {
         mActivity = new WeakReference<>(activity);
@@ -34,6 +35,7 @@ public class ActivityConfig {
         config.setShowHomeAsUpKey(true);
         config.setIsLinearRoot(true);
         config.setTranslucentStatusBar(true);
+        config.setSystemBarTransparent(false);
         return config;
     }
 
@@ -94,6 +96,15 @@ public class ActivityConfig {
             }
         }
         return this;
+    }
+
+    public ActivityConfig setSystemBarTransparent(boolean value) {
+        mTransparentBar = value;
+        return this;
+    }
+
+    public boolean isTransparentBar() {
+        return mTransparentBar;
     }
 
     public ActivityConfig setTheme(int resId) {
