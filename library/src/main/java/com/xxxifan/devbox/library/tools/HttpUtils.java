@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit;
  * Created by xifan on 15-7-17.
  */
 public class HttpUtils {
-    public static final MediaType MEDIE_TYPE_URLENCODE = MediaType.parse("application/x-www-form-urlencoded; charset=utf-8");
+    public static final MediaType MEDIA_TYPE_URLENCODE = MediaType.parse("application/x-www-form-urlencoded; charset=utf-8");
     public static final MediaType MEDIA_TYPE_JSON = MediaType.parse("application/json; charset=utf-8");
     public static final MediaType MEDIA_TYPE_PNG = MediaType.parse("image/png");
 
@@ -118,7 +118,7 @@ public class HttpUtils {
             if (str.length() == 0) {
                 throw new IllegalStateException("Form encoded body must have at least one part.");
             }
-            body = RequestBody.create(MEDIE_TYPE_URLENCODE, str.toString().getBytes("utf-8"));
+            body = RequestBody.create(MEDIA_TYPE_URLENCODE, str.toString().getBytes("utf-8"));
         } catch (UnsupportedEncodingException e) {
             throw new AssertionError(e);
         }
