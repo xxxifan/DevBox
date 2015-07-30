@@ -31,9 +31,9 @@ public class BasePagerActivity extends BaseActivity {
     }
 
     @Override
-    protected void initView() {
-        mViewPager = ButterKnife.findById(this, R.id.base_viewpager);
-        mPagerStrip = ButterKnife.findById(this, R.id.base_viewpager_strip);
+    protected void initView(View rootView) {
+        mViewPager = ButterKnife.findById(rootView, R.id.base_viewpager);
+        mPagerStrip = ButterKnife.findById(rootView, R.id.base_viewpager_strip);
     }
 
     /**

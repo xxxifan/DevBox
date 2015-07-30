@@ -1,10 +1,13 @@
 package com.xxxifan.devbox.library.tools;
 
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
+import com.xxxifan.devbox.library.callbacks.CommandCallback;
 import com.xxxifan.devbox.library.callbacks.ImageDownloadCallback;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -24,10 +27,8 @@ public class IOUtils {
         BufferedSink sink = null;
         try {
             sink = Okio.buffer(Okio.sink(targetFile));
-            int bufferSize = 8 * 1024;
-            while (source.read(sink.buffer(), bufferSize) > 0) {
-                sink.emit();
-            }
+            source.readAll(sink);
+            sink.emit();
             return true;
         } catch (IOException e) {
             e.printStackTrace();
@@ -70,7 +71,56 @@ public class IOUtils {
         return inSampleSize;
     }
 
-    public static void getBitmap(ImageDownloadCallback callback) {
+    public static void loadBitmap(ImageDownloadCallback callback) {
         callback.onLoadImage();
+    }
+
+    public static File saveBitmapJPG(Bitmap bitmap, String filename) {
+        return saveBitmap(bitmap, Utils.getTempFile(filename), Bitmap.CompressFormat.JPEG);
+    }
+
+    public static File saveBitmapPNG(Bitmap bitmap, String filename) {
+        return saveBitmap(bitmap, Utils.getTempFile(filename), Bitmap.CompressFormat.PNG);
+    }
+
+    public static File saveBitmap(Bitmap bitmap, File target, Bitmap.CompressFormat format) {
+        if (bitmap != null && target != null) {
+            try {
+                if (target.exists()) {
+                    target.delete();
+                }
+
+                FileOutputStream stream = new FileOutputStream(target);
+                bitmap.compress(format, 90, stream);
+                stream.flush();
+                stream.close();
+                bitmap.recycle();
+                return target;
+            } catch (IOException e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+        return null;
+    }
+
+    public static void runCmd(String[] cmd, CommandCallback callback) {
+        Process p;
+        String result;
+        try {
+            p = new ProcessBuilder(cmd).redirectErrorStream(true).start();
+            BufferedSource source = Okio.buffer(Okio.source(p.getInputStream()));
+            result = source.readUtf8().trim();
+            if (callback != null) {
+                callback.done(result, null);
+            }
+            p.destroy();
+            source.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            if (callback != null) {
+                callback.done(null, e);
+            }
+        }
     }
 }

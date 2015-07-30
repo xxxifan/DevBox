@@ -23,7 +23,8 @@ public class MainActivity extends BaseActivity {
     }
 
     @Override
-    protected void initView() {
+    protected void initView(View rootView) {
+
     }
 
     public void onTestClick(View view) {

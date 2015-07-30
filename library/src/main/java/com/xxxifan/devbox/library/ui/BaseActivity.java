@@ -34,6 +34,7 @@ public abstract class BaseActivity extends AppCompatActivity {
 
     /**
      * get ActivityConfig, for visual configs, call it before super.onCreate()
+     *
      * @return
      */
     protected ActivityConfig getConfig() {
@@ -55,26 +56,30 @@ public abstract class BaseActivity extends AppCompatActivity {
     }
 
     protected void setContentView(int layoutResID, ActivityConfig config) {
+        View activityView;
         if (config.useToolbar()) {
-            super.setContentView(config.isLinearRoot() ? R.layout.activity_toolbar : R.layout.activity_toolbar_nest);
+            activityView = getLayoutInflater().inflate(config.isLinearRoot() ?
+                    R.layout.activity_toolbar : R.layout.activity_toolbar_nest, null, false);
+            super.setContentView(activityView);
             View view = getLayoutInflater().inflate(layoutResID, null, false);
-            view.setFitsSystemWindows(!config.isTransparentBar());
+            activityView.setFitsSystemWindows(!config.isTransparentBar());
 
             if (config.isLinearRoot()) {
-                ((LinearLayout) findViewById(R.id.toolbar_container)).addView(view);
+                ((LinearLayout) activityView).addView(view);
             } else {
-                ((FrameLayout) findViewById(R.id.toolbar_container)).addView(view, 0);
+                ((FrameLayout) activityView).addView(view, 0);
             }
 
-            Toolbar toolbar = ButterKnife.findById(this, R.id.toolbar);
+            Toolbar toolbar = ButterKnife.findById(activityView, R.id.toolbar);
             if (toolbar != null) {
                 setupToolbar(toolbar);
             }
         } else {
-            super.setContentView(layoutResID);
+            activityView = getLayoutInflater().inflate(layoutResID, null, false);
+            super.setContentView(activityView);
         }
 
-        initView();
+        initView(activityView);
     }
 
     /**
@@ -84,7 +89,7 @@ public abstract class BaseActivity extends AppCompatActivity {
         ActivityConfig config = getConfig();
         toolbar.setBackgroundColor(config.getToolbarColor());
         setSupportActionBar(toolbar);
-        ActionBar actionBar =  getSupportActionBar();
+        ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(getConfig().showHomeAsUpKey());
         }
@@ -116,12 +121,13 @@ public abstract class BaseActivity extends AppCompatActivity {
             for (int i = 0; i < mUiControllers.size(); i++) {
                 mUiControllers.get(i).onDestroy();
             }
+            mUiControllers.clear();
             mUiControllers = null;
         }
     }
 
     /**
-     * register controllers, so that BaseActivity can do some work automati
+     * register controllers, so that BaseActivity can do some work automatically
      *
      * @param controller
      */
@@ -150,5 +156,8 @@ public abstract class BaseActivity extends AppCompatActivity {
         return mContext;
     }
 
-    protected abstract void initView();
+    /**
+     * @param rootView the root of user layout
+     */
+    protected abstract void initView(View rootView);
 }
