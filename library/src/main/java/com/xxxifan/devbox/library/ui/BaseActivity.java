@@ -75,13 +75,13 @@ public abstract class BaseActivity extends AppCompatActivity {
         if (config.useToolbar()) {
             // set root layout
             rootView = getLayoutInflater().inflate(config.getRootResId(), null, false);
-            rootView.setFitsSystemWindows(config.isFitSystemWindow());
             super.setContentView(rootView);
 
             View containerView = rootView.findViewById(R.id.toolbar_container);
             if (containerView == null) {
                 throw new IllegalStateException("Cannot find toolbar_container");
             }
+            containerView.setFitsSystemWindows(config.isFitSystemWindow());
 
             // attach user layout
             View view = getLayoutInflater().inflate(layoutResID, null, false);
