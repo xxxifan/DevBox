@@ -159,7 +159,7 @@ public abstract class BaseActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(getConfig().showHomeAsUpKey());
+            actionBar.setDisplayHomeAsUpEnabled(getConfig().isShowHomeAsUpKey());
         }
 
         // set compat status color in kitkat or later devices
@@ -233,3 +233,4 @@ public abstract class BaseActivity extends AppCompatActivity {
      */
     protected abstract void initView(View rootView);
 }
+

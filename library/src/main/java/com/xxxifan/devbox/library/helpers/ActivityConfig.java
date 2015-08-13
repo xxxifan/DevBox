@@ -42,7 +42,6 @@ public class ActivityConfig {
         config.setShowHomeAsUpKey(true);
         config.setIsLinearRoot(true);
         config.setTranslucentStatusBar(true);
-        config.setFitSystemWindow(false);
         return config;
     }
 
@@ -59,15 +58,21 @@ public class ActivityConfig {
         return mUseToolbar;
     }
 
+    /**
+     *  configure to use toolbar, default true
+     */
     public ActivityConfig setUseToolbar(boolean useToolbar) {
         mUseToolbar = useToolbar;
         return this;
     }
 
-    public boolean showHomeAsUpKey() {
+    public boolean isShowHomeAsUpKey() {
         return mShowHomeAsUpKey;
     }
 
+    /**
+     * configure to show home as up key, default true
+     */
     public ActivityConfig setShowHomeAsUpKey(boolean enable) {
         mShowHomeAsUpKey = enable;
         return this;
@@ -77,11 +82,17 @@ public class ActivityConfig {
         return mIsLinearRoot;
     }
 
+    /**
+     * configure to whether is linear root layout, default true
+     */
     public ActivityConfig setIsLinearRoot(boolean isLinearRoot) {
         mIsLinearRoot = isLinearRoot;
         return this;
     }
 
+    /**
+     * whether enable translucent status bar, default true
+     */
     public ActivityConfig setTranslucentStatusBar(boolean enable) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && mActivity != null && mActivity.get()
                 != null) {
@@ -96,6 +107,9 @@ public class ActivityConfig {
         return this;
     }
 
+    /**
+     * whether enable translucent nav bar, default false
+     */
     public ActivityConfig setTranslucentNavBar(boolean enable) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && mActivity != null && mActivity.get()
                 != null) {
@@ -115,6 +129,9 @@ public class ActivityConfig {
         return mIsFitSystemWindow;
     }
 
+    /**
+     * @return configure to use fit system window, default false
+     */
     public ActivityConfig setFitSystemWindow(boolean value) {
         mIsFitSystemWindow = value;
         return this;
@@ -142,7 +159,7 @@ public class ActivityConfig {
     }
 
     /**
-     * set root layout id with DrawerLayout, it will enable toolbar too.
+     * set root layout id with DrawerLayout and enable drawerLayout, it will enable toolbar too.
      */
     public ActivityConfig setDrawerResId(@LayoutRes int headerLayoutId, int menuIcons, int menuItems) {
         mDrawerHeaderResId = headerLayoutId;
@@ -171,3 +188,4 @@ public class ActivityConfig {
                 mIsFitSystemWindow;
     }
 }
+
