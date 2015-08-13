@@ -1,20 +1,29 @@
 package com.xxxifan.devbox.library.ui;
 
 import android.content.Context;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 
 import com.xxxifan.devbox.library.R;
+import com.xxxifan.devbox.library.adapter.DrawerAdapter;
 import com.xxxifan.devbox.library.helpers.ActivityConfig;
 import com.xxxifan.devbox.library.helpers.SystemBarTintManager;
+import com.xxxifan.devbox.library.tools.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,15 +40,19 @@ public abstract class BaseActivity extends AppCompatActivity {
     private ActivityConfig mConfig;
     private SystemBarTintManager mSystemBarManager;
     private List<UiController> mUiControllers;
+    private DrawerLayout mDrawerLayout;
+
+    private boolean mCreateFlag;
 
     /**
      * get ActivityConfig, for visual configs, call it before super.onCreate()
-     *
-     * @return
      */
     protected ActivityConfig getConfig() {
         if (mConfig == null) {
             mConfig = ActivityConfig.newInstance(this);
+            if (mCreateFlag) {
+                Log.e(this, "ActivityConfig should be called before supre.onCreate(), or some config will not be applied");
+            }
         }
         return mConfig;
     }
@@ -48,38 +61,93 @@ public abstract class BaseActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mContext = this;
+        mCreateFlag = true;
     }
 
     @Override
     public void setContentView(int layoutResID) {
+        mCreateFlag = false;
         setContentView(layoutResID, getConfig());
     }
 
     protected void setContentView(int layoutResID, ActivityConfig config) {
-        View activityView;
+        View rootView;
         if (config.useToolbar()) {
-            activityView = getLayoutInflater().inflate(config.isLinearRoot() ?
-                    R.layout.activity_toolbar : R.layout.activity_toolbar_nest, null, false);
-            super.setContentView(activityView);
-            View view = getLayoutInflater().inflate(layoutResID, null, false);
-            activityView.setFitsSystemWindows(!config.isTransparentBar());
+            // set root layout
+            rootView = getLayoutInflater().inflate(config.getRootResId(), null, false);
+            rootView.setFitsSystemWindows(config.isFitSystemWindow());
+            super.setContentView(rootView);
 
-            if (config.isLinearRoot()) {
-                ((LinearLayout) activityView).addView(view);
-            } else {
-                ((FrameLayout) activityView).addView(view, 0);
+            View containerView = rootView.findViewById(R.id.toolbar_container);
+            if (containerView == null) {
+                throw new IllegalStateException("Cannot find toolbar_container");
             }
 
-            Toolbar toolbar = ButterKnife.findById(activityView, R.id.toolbar);
+            // attach user layout
+            View view = getLayoutInflater().inflate(layoutResID, null, false);
+            if (config.isLinearRoot()) {
+                ((LinearLayout) containerView).addView(view);
+            } else {
+                ((FrameLayout) containerView).addView(view, 0);
+            }
+
+            // setup toolbar if needed
+            Toolbar toolbar = ButterKnife.findById(rootView, R.id.toolbar);
             if (toolbar != null) {
                 setupToolbar(toolbar);
+                // setup drawer layout if needed, called before initView avoid of NPE
+                if (config.isDrawerLayout()) {
+                    setupDrawerLayout(rootView);
+                }
             }
         } else {
-            activityView = getLayoutInflater().inflate(layoutResID, null, false);
-            super.setContentView(activityView);
+            rootView = getLayoutInflater().inflate(layoutResID, null, false);
+            super.setContentView(rootView);
         }
 
-        initView(activityView);
+        initView(rootView);
+    }
+
+    private void setupDrawerLayout(View rootView) {
+        mDrawerLayout = ButterKnife.findById(rootView, R.id.drawer_layout);
+        if (mDrawerLayout == null) {
+            Log.e(this, "Cannot find DrawerLayout!");
+            return;
+        }
+
+        // TODO: Toggle drawer
+        ActionBarDrawerToggle drawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout, 0, 0);
+        mDrawerLayout.setDrawerListener(drawerToggle);
+        drawerToggle.syncState();
+
+        View headerView = getLayoutInflater().inflate(getConfig().getDrawerHeaderResId(), null);
+        ListView drawerListView = ButterKnife.findById(rootView, R.id.drawer_item_list);
+        setDrawerAdapter(drawerListView, headerView);
+    }
+
+    /**
+     * setup drawer item list. You can override it to use a custom adapter.
+     */
+    protected void setDrawerAdapter(final ListView drawerListView, View headerView) {
+        final DrawerAdapter drawerAdapter = new DrawerAdapter(drawerListView, getConfig());
+        drawerListView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+        drawerListView.setDivider(new ColorDrawable(getResources().getColor(R.color.transparent)));
+        drawerListView.setDividerHeight(0);
+        drawerListView.setBackgroundColor(getResources().getColor(R.color.white));
+        drawerListView.setCacheColorHint(Color.TRANSPARENT);
+        drawerListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                if (drawerListView.getHeaderViewsCount() > 0) {
+                    position--; // fix wrong pos.
+                }
+                if (view.getId() != R.id.drawer_divider) {
+                    drawerListView.setItemChecked(position, true);
+                }
+            }
+        });
+        drawerListView.addHeaderView(headerView, null, false);
+        drawerListView.setAdapter(drawerAdapter);
     }
 
     /**
@@ -95,7 +163,7 @@ public abstract class BaseActivity extends AppCompatActivity {
         }
 
         // set compat status color in kitkat or later devices
-        if (!config.isTransparentBar() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+        if (config.isFitSystemWindow() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             if (mSystemBarManager == null) {
                 mSystemBarManager = new SystemBarTintManager(this);
             }
@@ -107,7 +175,11 @@ public abstract class BaseActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
-            finish();
+            if (getConfig().isDrawerLayout() && mDrawerLayout != null) {
+                mDrawerLayout.openDrawer(Gravity.LEFT);
+            } else {
+                finish();
+            }
             return true;
         }
         return super.onOptionsItemSelected(item);
