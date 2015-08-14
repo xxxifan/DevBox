@@ -42,6 +42,7 @@ public class ActivityConfig {
         config.setShowHomeAsUpKey(true);
         config.setIsLinearRoot(true);
         config.setTranslucentStatusBar(true);
+        config.setFitSystemWindow(true);
         return config;
     }
 
@@ -130,7 +131,7 @@ public class ActivityConfig {
     }
 
     /**
-     * @return configure to use fit system window, default false
+     * @return set container layout to use fit system window, default false
      */
     public ActivityConfig setFitSystemWindow(boolean value) {
         mIsFitSystemWindow = value;
@@ -188,4 +189,3 @@ public class ActivityConfig {
                 mIsFitSystemWindow;
     }
 }
-

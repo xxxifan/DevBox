@@ -44,12 +44,12 @@
             android:layout_height="wrap_content"
             android:layout_alignParentRight="true"
             android:layout_centerVertical="true"
-            android:background="@color/colorAccent"
+            android:background="@color/red_700"
             android:paddingBottom="2dp"
             android:paddingLeft="@dimen/item_padding_small"
             android:paddingRight="@dimen/item_padding_small"
             android:paddingTop="2dp"
-            android:textColor="@color/white"
-            android:visibility="gone" />
+            android:text="1"
+            android:textColor="@color/white" />
     </RelativeLayout>
 </LinearLayout>

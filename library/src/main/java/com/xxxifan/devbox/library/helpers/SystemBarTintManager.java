@@ -84,6 +84,8 @@ public class SystemBarTintManager {
     public SystemBarTintManager(Activity activity) {
 
         Window win = activity.getWindow();
+//        ViewGroup decorViewGroup = isDrawerRoot ? ButterKnife.<ViewGroup>findById(activity, R.id
+//                .toolbar_container) : (ViewGroup) win.getDecorView();
         ViewGroup decorViewGroup = (ViewGroup) win.getDecorView();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
@@ -326,7 +328,7 @@ public class SystemBarTintManager {
         mStatusBarTintView.setLayoutParams(params);
         mStatusBarTintView.setBackgroundColor(DEFAULT_TINT_COLOR);
         mStatusBarTintView.setVisibility(View.GONE);
-        decorViewGroup.addView(mStatusBarTintView);
+        decorViewGroup.addView(mStatusBarTintView, 0);
     }
 
     private void setupNavBarView(Context context, ViewGroup decorViewGroup) {
