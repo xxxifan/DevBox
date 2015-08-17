@@ -1,6 +1,8 @@
 package com.xxxifan.devbox.library.adapter;
 
 import android.content.Context;
+import android.content.res.TypedArray;
+import android.support.annotation.DrawableRes;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup;
@@ -34,17 +36,19 @@ public class DrawerAdapter extends BaseAdapter {
 
     private void initMenuList(ActivityConfig config) {
         mList = new ArrayList<>();
-        int[] icons = mContext.getResources().getIntArray(config.getDrawerMenuIconId());
         String[] items = mContext.getResources().getStringArray(config.getDrawerMenuItemId());
-        if (icons.length != items.length) {
+        TypedArray typedArray = mContext.getResources().obtainTypedArray(config.getDrawerMenuIconId());
+        if (typedArray.length() != items.length) {
             throw new IllegalStateException("drawer icons is not equals items!");
         }
 
         ListItem listItem;
-        for (int i = 0, s = icons.length; i < s; i++) {
-            listItem = new ListItem(icons[i], items[i]);
+        for (int i = 0, s = typedArray.length(); i < s; i++) {
+            listItem = new ListItem(typedArray.getResourceId(i, 0), items[i]);
             mList.add(listItem);
         }
+
+        typedArray.recycle();
     }
 
     @Override
@@ -113,8 +117,8 @@ public class DrawerAdapter extends BaseAdapter {
                 holder.drawerIcon.clearColorFilter();
             }
 
-            holder.drawerTitle.setText(listItem.menu);
             holder.drawerIcon.setImageResource(listItem.iconId);
+            holder.drawerTitle.setText(listItem.menu);
         }
 
         return convertView;
@@ -129,11 +133,12 @@ public class DrawerAdapter extends BaseAdapter {
     }
 
     private class ListItem {
+        @DrawableRes
         int iconId;
         String menu;
         int count;
 
-        public ListItem(int icon, String menu) {
+        public ListItem(@DrawableRes int icon, String menu) {
             this.iconId = icon;
             this.menu = menu;
         }

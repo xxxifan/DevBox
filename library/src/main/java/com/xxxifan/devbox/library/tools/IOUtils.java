@@ -4,7 +4,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
 import com.xxxifan.devbox.library.callbacks.CommandCallback;
-import com.xxxifan.devbox.library.callbacks.ImageDownloadCallback;
+import com.xxxifan.devbox.library.callbacks.http.ImageDownloadCallback;
 
 import java.io.File;
 import java.io.FileOutputStream;

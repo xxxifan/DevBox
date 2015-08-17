@@ -54,6 +54,8 @@ public class BasePagerActivity extends BaseActivity {
             mViewPager.setAdapter(mPagerAdapter = new BasePagerAdapter(getSupportFragmentManager(),
                     fragments));
             mPagerStrip.setViewPager(mViewPager);
+        } else {
+            mPagerStrip.setVisibility(View.GONE);
         }
     }
 

@@ -42,7 +42,10 @@ public abstract class BaseActivity extends AppCompatActivity {
     private List<UiController> mUiControllers;
     private DrawerLayout mDrawerLayout;
 
-    private boolean mCreateFlag;
+    /**
+     * flag to determine proper ActivityConfig setup.
+     */
+    private boolean mConfigFlag;
 
     /**
      * get ActivityConfig, for visual configs, call it before super.onCreate()
@@ -50,8 +53,8 @@ public abstract class BaseActivity extends AppCompatActivity {
     protected ActivityConfig getConfig() {
         if (mConfig == null) {
             mConfig = ActivityConfig.newInstance(this);
-            if (mCreateFlag) {
-                Log.e(this, "ActivityConfig should be called before supre.onCreate(), or some config will not be applied");
+            if (mConfigFlag) {
+                Log.e(this, "ActivityConfig should be called before super.onCreate(), or some config will not be applied");
             }
         }
         return mConfig;
@@ -61,12 +64,12 @@ public abstract class BaseActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mContext = this;
-        mCreateFlag = true;
+        mConfigFlag = true;
     }
 
     @Override
     public void setContentView(int layoutResID) {
-        mCreateFlag = false;
+        mConfigFlag = false;
         setContentView(layoutResID, getConfig());
     }
 
@@ -115,7 +118,6 @@ public abstract class BaseActivity extends AppCompatActivity {
             return;
         }
 
-        // TODO: Toggle drawer
         ActionBarDrawerToggle drawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout, 0, 0);
         mDrawerLayout.setDrawerListener(drawerToggle);
         drawerToggle.syncState();
@@ -128,7 +130,7 @@ public abstract class BaseActivity extends AppCompatActivity {
     /**
      * setup drawer item list. You can override it to use a custom adapter.
      */
-    protected void setDrawerAdapter(final ListView drawerListView, View headerView) {
+    protected void setDrawerAdapter(ListView drawerListView, View headerView) {
         final DrawerAdapter drawerAdapter = new DrawerAdapter(drawerListView, getConfig());
         drawerListView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
         drawerListView.setDivider(new ColorDrawable(getResources().getColor(R.color.transparent)));
@@ -136,18 +138,28 @@ public abstract class BaseActivity extends AppCompatActivity {
         drawerListView.setBackgroundColor(getResources().getColor(R.color.white));
         drawerListView.setCacheColorHint(Color.TRANSPARENT);
         drawerListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            private int lastCheckPosition;
+
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                if (drawerListView.getHeaderViewsCount() > 0) {
+                ListView listView = (ListView) parent;
+                if (listView.getHeaderViewsCount() > 0) {
                     position--; // fix wrong pos.
                 }
-                if (view.getId() != R.id.drawer_divider) {
-                    drawerListView.setItemChecked(position, true);
+                listView.getCheckedItemPosition();
+                if (view.getId() != R.id.drawer_divider && lastCheckPosition != position) {
+                    listView.setItemChecked(position, true);
+                    lastCheckPosition = position;
+
+                    if (getConfig().getDrawerMenuClickListener() != null) {
+                        getConfig().getDrawerMenuClickListener().onMenuClick(view, position);
+                    }
                 }
             }
         });
         drawerListView.addHeaderView(headerView, null, false);
         drawerListView.setAdapter(drawerAdapter);
+        drawerListView.setItemChecked(0, true);
     }
 
     /**

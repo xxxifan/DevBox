@@ -3,6 +3,7 @@ package com.xxxifan.devbox.library.helpers;
 import android.os.Build;
 import android.support.annotation.ColorInt;
 import android.support.annotation.LayoutRes;
+import android.view.View;
 import android.view.WindowManager;
 
 import com.xxxifan.devbox.library.AppDelegate;
@@ -18,6 +19,8 @@ import java.lang.ref.WeakReference;
 public class ActivityConfig {
 
     private WeakReference<BaseActivity> mActivity;
+
+    private DrawerMenuClickListener mMenuClickListener;
 
     @ColorInt
     private int mToolbarColor;
@@ -175,6 +178,15 @@ public class ActivityConfig {
         return mIsDrawerLayout;
     }
 
+    public ActivityConfig setDrawerMenuClickListener(DrawerMenuClickListener listener) {
+        mMenuClickListener = listener;
+        return this;
+    }
+
+    public DrawerMenuClickListener getDrawerMenuClickListener() {
+        return mMenuClickListener;
+    }
+
     public int getRootResId() {
         int linearRoot = isDrawerLayout() ? R.layout.activity_drawer : R.layout.activity_toolbar;
         int nestRoot = isDrawerLayout() ? R.layout.activity_drawer_nest : R.layout.activity_toolbar_nest;
@@ -187,5 +199,9 @@ public class ActivityConfig {
                 "=" + mDrawerHeaderResId + "\nmUseToolbar=" + mUseToolbar + "\nmIsLinearRoot=" +
                 mIsLinearRoot + "\nmShowHomeAsUpKey=" + mShowHomeAsUpKey + "\nmIsFitSystemWindow=" +
                 mIsFitSystemWindow;
+    }
+
+    public interface DrawerMenuClickListener{
+        void onMenuClick(View v, int position);
     }
 }

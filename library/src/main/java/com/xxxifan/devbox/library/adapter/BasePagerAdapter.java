@@ -4,6 +4,8 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 
+import com.xxxifan.devbox.library.Keys;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,8 +32,21 @@ public class BasePagerAdapter extends FragmentPagerAdapter {
 
     @Override
     public CharSequence getPageTitle(int position) {
+        // retrieve title from fragments arguments
         if (mTitles == null || mTitles.length < 1) {
-            return "";
+            if (mFragmentList != null && mFragmentList.size() > 0) {
+                mTitles = new String[mFragmentList.size()];
+                try {
+                    for (int i = 0; i < mFragmentList.size(); i++) {
+                        mTitles[i] = mFragmentList.get(i).getArguments().getString(Keys.EXTRA_TITLE);
+                    }
+                } catch (Exception e) {
+                    return "";
+                }
+                return mTitles[position];
+            } else {
+                return "";
+            }
         }
 
         return mTitles[position];
@@ -39,11 +54,11 @@ public class BasePagerAdapter extends FragmentPagerAdapter {
 
     @Override
     public Fragment getItem(int position) {
-        return mFragmentList.get(position);
+        return mFragmentList == null ? null : mFragmentList.get(position);
     }
 
     @Override
     public int getCount() {
-        return mFragmentList.size();
+        return mFragmentList == null ? 0 : mFragmentList.size();
     }
 }

@@ -9,8 +9,6 @@ import com.afollestad.materialdialogs.MaterialDialog;
 import com.xxxifan.devbox.library.Keys;
 import com.xxxifan.devbox.library.tools.ViewUtils;
 
-import butterknife.ButterKnife;
-
 /**
  * Created by Bob Peng on 2015/5/7.
  */
@@ -19,9 +17,9 @@ public class BaseFragment extends Fragment {
 
     private MaterialDialog mLoadingDialog;
 
-    private String mTabTitle = "";
     private boolean mIsDataLoaded = false;
     private boolean mLazyLoad = false;
+    private String mTabTitle;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -55,7 +53,6 @@ public class BaseFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         dismissDialog();
-        ButterKnife.unbind(this);
     }
 
     protected Context getContext() {
@@ -67,7 +64,7 @@ public class BaseFragment extends Fragment {
      */
     public void onBundleReceived(Bundle data) {
         String title = data.getString(Keys.EXTRA_TITLE);
-        mTabTitle = TextUtils.isEmpty(title) ? "" : title;
+        setTabTitle(TextUtils.isEmpty(title) ? "" : title);
     }
 
     /**
@@ -106,7 +103,7 @@ public class BaseFragment extends Fragment {
     }
 
     public String getTabTitle() {
-        return mTabTitle;
+        return mTabTitle == null ? "" : mTabTitle;
     }
 
     public void setTabTitle(String title) {
