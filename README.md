@@ -7,14 +7,14 @@ For now it's really SIMPLE. I have those classes to quicker development:
 UI
 
     |BaseActivity
-    |-BasePagerActivity
+    |--BasePagerActivity
     |BaseFragment
-    |-BasePagerFragment
-    |-BaseRecyclerFragment
+    |--BasePagerFragment
+    |--BaseRecyclerFragment
 
 >BaseActivity
 
-is a Activity extended from AppCompatActivity, which support Toolbar with LinearLayout or Framelayout, translucent status bar and nav bar. Also, I introduced a class named ActivityConfig, and a fragment version especially for my BaseRecyclerFragment, which integrated a set of visual configs, like the functions I've talked above.
+is a Activity extended from AppCompatActivity, which support Toolbar with LinearLayout or Framelayout, translucent status bar and nav bar and DrawerLayout support. Also, I introduced a class named ActivityConfig, and a fragment version especially for my BaseRecyclerFragment, which integrated a set of visual configs, like the functions I've talked above.
 
 >BasePagerActivity
 
@@ -61,4 +61,14 @@ like this:
 
 and now, you can using this framework as your wish.
 
+## ActivityConfig
+Is part of BaseActivity, with it you can setup activity style quickly.
+e.g.
 
+    public void onCreate(Bundle savedInstance) {
+        getConfig().setUseToolBar(false);
+        super.onCreate(savedInstance);
+    }
+
+Remeber that getConfig() should be called before super.onCreate(savedInstance), if you
+set it after super call, some of visual changes may not effect.
