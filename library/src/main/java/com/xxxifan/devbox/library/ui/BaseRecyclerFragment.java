@@ -10,7 +10,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.xxxifan.devbox.library.R;
-import com.xxxifan.devbox.library.helpers.ListFragmentConfig;
+import com.xxxifan.devbox.library.helpers.RecyclerConfig;
 
 
 /**
@@ -34,15 +34,15 @@ public abstract class BaseRecyclerFragment extends BaseFragment {
     private SwipeRefreshLayout mRefreshLayout;
     private LayoutInflater mInflater;
 
-    private ListFragmentConfig mConfig;
+    private RecyclerConfig mConfig;
 
     private int mLastId = REQUEST_NO_ID;
     private boolean mIsDataEnd;
     private boolean mPostRefresh;
 
-    protected ListFragmentConfig getConfig() {
+    protected RecyclerConfig getConfig() {
         if (mConfig == null) {
-            mConfig = ListFragmentConfig.newInstance();
+            mConfig = RecyclerConfig.newInstance();
         }
         return mConfig;
     }
@@ -59,16 +59,7 @@ public abstract class BaseRecyclerFragment extends BaseFragment {
         if (childView == null) {
             throw new IllegalStateException("Recycler not found");
         }
-        mRecyclerView = (RecyclerView) childView;
-        mRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        if (getConfig().isEnableScrollListener()) {
-            mRecyclerView.addOnScrollListener(new ScrollListener());
-        }
-
-        if (mAdapter == null) {
-            mAdapter = new BaseRecyclerAdapter();
-        }
-        mRecyclerView.setAdapter(mAdapter);
+        setupRecyclerView(mRecyclerView = (RecyclerView) childView);
 
         // setup refresh layout
         View layoutView = view.findViewById(R.id.fragment_recycler_swipe_layout);
@@ -93,6 +84,18 @@ public abstract class BaseRecyclerFragment extends BaseFragment {
             }
         }
         return view;
+    }
+
+    protected void setupRecyclerView(RecyclerView recyclerView) {
+        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        if (getConfig().isEnableScrollListener()) {
+            recyclerView.addOnScrollListener(new ScrollListener());
+        }
+
+        if (mAdapter == null) {
+            mAdapter = new BaseRecyclerAdapter();
+        }
+        recyclerView.setAdapter(mAdapter);
     }
 
     @Override
@@ -208,7 +211,8 @@ public abstract class BaseRecyclerFragment extends BaseFragment {
     }
 
     /**
-     * onSwipeRefreshLayout refresh
+     * called when a good time to load data.
+     * SwipeRefreshLayout will call this method too.
      *
      * @param loadType choose to append result to current list or replace list.
      */
