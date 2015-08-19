@@ -1,40 +1,14 @@
 apply plugin: 'com.android.application'
 
 android {
-    signingConfigs {
-        config {
-            keyAlias 'xxxifan'
-            keyPassword '12702607'
-            storeFile file('/home/xifan/projects/Devbox/devbox.jks')
-            storePassword 'CHAOji123'
-        }
-    }
-    compileSdkVersion 22
-    buildToolsVersion "22.0.1"
+    compileSdkVersion 23
+    buildToolsVersion "23.0.0"
     defaultConfig {
         applicationId "com.xxxifan.devbox.demo"
         minSdkVersion 15
-        targetSdkVersion 22
+        targetSdkVersion 23
         versionCode 1
         versionName "1.0"
-        signingConfig signingConfigs.config
-    }
-    buildTypes {
-        release {
-            minifyEnabled true
-            proguardFile '/home/xifan/projects/DevBox/library/proguard-rules.pro'
-        }
-        debug {
-            minifyEnabled false
-            signingConfig signingConfigs.config
-        }
-        debug {
-            signingConfig signingConfigs.config
-        }
-    }
-    productFlavors {
-    }
-    productFlavors {
     }
 }
 

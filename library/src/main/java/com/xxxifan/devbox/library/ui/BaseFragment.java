@@ -1,6 +1,7 @@
 package com.xxxifan.devbox.library.ui;
 
 import android.content.Context;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.text.TextUtils;
@@ -55,7 +56,10 @@ public class BaseFragment extends Fragment {
         dismissDialog();
     }
 
-    protected Context getContext() {
+    public Context getContext() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            super.getContext();
+        }
         return mContext;
     }
 
