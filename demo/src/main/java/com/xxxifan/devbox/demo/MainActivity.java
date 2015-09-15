@@ -1,6 +1,5 @@
 package com.xxxifan.devbox.demo;
 
-import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
@@ -8,6 +7,7 @@ import android.widget.Toast;
 import com.squareup.okhttp.Callback;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
+import com.xxxifan.devbox.library.helpers.ActivityConfig;
 import com.xxxifan.devbox.library.tools.HttpUtils;
 import com.xxxifan.devbox.library.ui.BaseActivity;
 
@@ -16,10 +16,13 @@ import java.io.IOException;
 public class MainActivity extends BaseActivity {
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        getConfig().setShowHomeAsUpKey(false);
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+    protected void onCreateActivityConfig(ActivityConfig config) {
+        config.setShowHomeAsUpKey(false);
+    }
+
+    @Override
+    protected int getLayoutId() {
+        return R.layout.activity_main;
     }
 
     @Override

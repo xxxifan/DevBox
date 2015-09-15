@@ -5,7 +5,11 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.IdRes;
+import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -14,13 +18,14 @@ import android.support.v7.widget.Toolbar;
 import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewStub;
 import android.widget.AdapterView;
 import android.widget.FrameLayout;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 
 import com.xxxifan.devbox.library.R;
 import com.xxxifan.devbox.library.adapter.DrawerAdapter;
+import com.xxxifan.devbox.library.entity.CustomEvent;
 import com.xxxifan.devbox.library.helpers.ActivityConfig;
 import com.xxxifan.devbox.library.helpers.SystemBarTintManager;
 import com.xxxifan.devbox.library.tools.Log;
@@ -29,6 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.ButterKnife;
+import de.greenrobot.event.EventBus;
 
 /**
  * Created by Administrator on 2015/5/6.
@@ -43,44 +49,34 @@ public abstract class BaseActivity extends AppCompatActivity {
     private DrawerLayout mDrawerLayout;
 
     /**
-     * flag to determine proper ActivityConfig setup.
-     */
-    private boolean mConfigFlag;
-
-    /**
      * get ActivityConfig, for visual configs, call it before super.onCreate()
      */
     protected ActivityConfig getConfig() {
         if (mConfig == null) {
             mConfig = ActivityConfig.newInstance(this);
-            if (mConfigFlag) {
-                Log.e(this, "ActivityConfig should be called before super.onCreate(), or some config will not be applied");
-            }
         }
         return mConfig;
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
         mContext = this;
-        mConfigFlag = true;
+        onCreateActivityConfig(getConfig());
+        super.onCreate(savedInstanceState);
+        setContentView(getLayoutId());
     }
 
     @Override
     public void setContentView(int layoutResID) {
-        mConfigFlag = false;
         setContentView(layoutResID, getConfig());
     }
 
     protected void setContentView(int layoutResID, ActivityConfig config) {
-        View rootView;
         if (config.useToolbar()) {
             // set root layout
-            rootView = getLayoutInflater().inflate(config.getRootResId(), null, false);
-            super.setContentView(rootView);
+            super.setContentView(config.getRootResId());
 
-            View containerView = rootView.findViewById(R.id.toolbar_container);
+            View containerView = findViewById(R.id.toolbar_container);
             if (containerView == null) {
                 throw new IllegalStateException("Cannot find toolbar_container");
             }
@@ -88,31 +84,34 @@ public abstract class BaseActivity extends AppCompatActivity {
 
             // attach user layout
             View view = getLayoutInflater().inflate(layoutResID, null, false);
-            if (config.isLinearRoot()) {
-                ((LinearLayout) containerView).addView(view);
-            } else {
-                ((FrameLayout) containerView).addView(view, 0);
-            }
+            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(-1, -1);
+            params.topMargin = getResources().getDimensionPixelSize(R.dimen.toolbar_height);
+            ((FrameLayout) containerView).addView(view, 0, params);
 
             // setup toolbar if needed
-            Toolbar toolbar = ButterKnife.findById(rootView, R.id.toolbar);
-            if (toolbar != null) {
-                setupToolbar(toolbar);
-                // setup drawer layout if needed, called before initView avoid of NPE
-                if (config.isDrawerLayout()) {
-                    setupDrawerLayout(rootView);
+            ViewStub toolbarStub = ButterKnife.findById(this, R.id.toolbar_stub);
+            if (toolbarStub != null) {
+                toolbarStub.setLayoutResource(config.isDarkToolbar() ? R.layout.view_toolbar_dark
+                        : R.layout.view_toolbar_light);
+                View toolbarStubView = toolbarStub.inflate();
+                if (toolbarStubView != null) {
+                    Toolbar toolbar = (Toolbar) toolbarStubView;
+                    setupToolbar(toolbar);
+                    // setup drawer layout if needed, called before initView avoid of NPE
+                    if (config.isDrawerLayout()) {
+                        setupDrawerLayout();
+                    }
                 }
             }
         } else {
-            rootView = getLayoutInflater().inflate(layoutResID, null, false);
-            super.setContentView(rootView);
+            super.setContentView(layoutResID);
         }
 
-        initView(rootView);
+        initView(getWindow().getDecorView());
     }
 
-    private void setupDrawerLayout(View rootView) {
-        mDrawerLayout = ButterKnife.findById(rootView, R.id.drawer_layout);
+    private void setupDrawerLayout() {
+        mDrawerLayout = ButterKnife.findById(this, R.id.drawer_layout);
         if (mDrawerLayout == null) {
             Log.e(this, "Cannot find DrawerLayout!");
             return;
@@ -123,7 +122,7 @@ public abstract class BaseActivity extends AppCompatActivity {
         drawerToggle.syncState();
 
         View headerView = getLayoutInflater().inflate(getConfig().getDrawerHeaderResId(), null);
-        ListView drawerListView = ButterKnife.findById(rootView, R.id.drawer_item_list);
+        ListView drawerListView = ButterKnife.findById(this, R.id.drawer_item_list);
         setDrawerAdapter(drawerListView, headerView);
     }
 
@@ -184,6 +183,53 @@ public abstract class BaseActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * set fragment will be attach to this activity right now
+     */
+    protected void showFragment(Fragment fragment) {
+        showFragment(fragment, getConfig().getContainerId());
+    }
+
+    /**
+     * set fragment will be attach to this activity right now
+     *
+     * @param containerId the target containerId will be attached to.
+     */
+    protected void showFragment(Fragment fragment, @IdRes int containerId) {
+        // get tag name
+        String tag = fragment.getTag();
+        if (tag == null) {
+            tag = fragment.getClass().getSimpleName();
+        }
+
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        List<Fragment> fragmentList = getSupportFragmentManager().getFragments();
+        if (fragmentList != null && fragmentList.size() > 0) {
+            boolean hasFragment = false;
+            // hide other fragment and check if fragment is exist
+            for (Fragment oldFragment : fragmentList) {
+                if (oldFragment.isVisible()) {
+                    transaction.hide(oldFragment);
+                }
+                if (tag.equals(oldFragment.getTag())) {
+                    hasFragment = true;
+                }
+            }
+
+            // if this fragment is not exist int manager, add it
+            if (!hasFragment) {
+                transaction.add(containerId, fragment, tag);
+            }
+
+            transaction.show(fragment);
+        } else {
+            transaction.add(containerId, fragment, tag);
+            transaction.show(fragment);
+        }
+
+        transaction.commit();
+    }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
@@ -195,6 +241,26 @@ public abstract class BaseActivity extends AppCompatActivity {
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (mUiControllers != null && mUiControllers.size() > 0) {
+            for (int i = 0; i < mUiControllers.size(); i++) {
+                mUiControllers.get(i).onResume();
+            }
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (mUiControllers != null && mUiControllers.size() > 0) {
+            for (int i = 0; i < mUiControllers.size(); i++) {
+                mUiControllers.get(i).onPause();
+            }
+        }
     }
 
     @Override
@@ -212,8 +278,6 @@ public abstract class BaseActivity extends AppCompatActivity {
 
     /**
      * register controllers, so that BaseActivity can do some work automatically
-     *
-     * @param controller
      */
     protected void registerUiController(UiController controller) {
         if (mUiControllers == null) {
@@ -236,9 +300,28 @@ public abstract class BaseActivity extends AppCompatActivity {
         }
     }
 
+    protected void postEvent(CustomEvent event, Class target) {
+        EventBus.getDefault().post(event);
+    }
+
+    protected void postStickyEvent(CustomEvent event, Class target) {
+        EventBus.getDefault().postSticky(event);
+    }
+
     protected Context getContext() {
         return mContext;
     }
+
+    /**
+     * Set ActivityConfig, called before super.onCreate()
+     */
+    protected abstract void onCreateActivityConfig(ActivityConfig config);
+
+    /**
+     * @return activity layout id, called while setContentView()
+     */
+    @LayoutRes
+    protected abstract int getLayoutId();
 
     /**
      * @param rootView the root of user layout

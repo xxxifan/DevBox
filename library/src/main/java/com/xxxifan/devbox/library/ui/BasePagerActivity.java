@@ -9,6 +9,7 @@ import android.widget.FrameLayout;
 import com.astuetz.PagerSlidingTabStrip;
 import com.xxxifan.devbox.library.R;
 import com.xxxifan.devbox.library.adapter.BasePagerAdapter;
+import com.xxxifan.devbox.library.helpers.ActivityConfig;
 
 import java.util.List;
 
@@ -26,8 +27,16 @@ public class BasePagerActivity extends BaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.view_base_pager);
         setupViewPager(initFragments(savedInstanceState));
+    }
+
+    @Override
+    protected void onCreateActivityConfig(ActivityConfig config) {
+    }
+
+    @Override
+    protected int getLayoutId() {
+        return R.layout.view_base_pager;
     }
 
     @Override

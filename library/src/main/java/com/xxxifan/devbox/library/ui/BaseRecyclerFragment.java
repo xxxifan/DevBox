@@ -1,11 +1,8 @@
 package com.xxxifan.devbox.library.ui;
 
-import android.os.Bundle;
-import android.support.annotation.Nullable;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -32,7 +29,6 @@ public abstract class BaseRecyclerFragment extends BaseFragment {
     private RecyclerView mRecyclerView;
     private RecyclerView.Adapter mAdapter;
     private SwipeRefreshLayout mRefreshLayout;
-    private LayoutInflater mInflater;
 
     private RecyclerConfig mConfig;
 
@@ -47,22 +43,22 @@ public abstract class BaseRecyclerFragment extends BaseFragment {
         return mConfig;
     }
 
-    @SuppressWarnings("ResourceType")
-    @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        mInflater = inflater;
-        View view = inflater.inflate(getConfig().getLayoutResId(), container, false);
+    protected int getLayoutId() {
+        return getConfig().getLayoutResId();
+    }
 
+    @Override
+    protected void initView(View rootView) {
         // setup recycler view
-        View childView = view.findViewById(R.id.fragment_recycler_view);
+        View childView = rootView.findViewById(R.id.fragment_recycler_view);
         if (childView == null) {
-            throw new IllegalStateException("Recycler not found");
+            throw new IllegalStateException("RecyclerView not found");
         }
         setupRecyclerView(mRecyclerView = (RecyclerView) childView);
 
         // setup refresh layout
-        View layoutView = view.findViewById(R.id.fragment_recycler_swipe_layout);
+        View layoutView = rootView.findViewById(R.id.fragment_recycler_swipe_layout);
         if (layoutView != null) {
             mRefreshLayout = (SwipeRefreshLayout) layoutView;
             mRefreshLayout.setColorSchemeColors(getResources().getColor(R.color.colorPrimary));
@@ -83,7 +79,6 @@ public abstract class BaseRecyclerFragment extends BaseFragment {
                 });
             }
         }
-        return view;
     }
 
     protected void setupRecyclerView(RecyclerView recyclerView) {
@@ -200,14 +195,6 @@ public abstract class BaseRecyclerFragment extends BaseFragment {
 
     protected void setAdapter(RecyclerView.Adapter adapter) {
         mAdapter = adapter;
-    }
-
-    protected LayoutInflater getLayoutInflater() {
-        return mInflater;
-    }
-
-    protected void setupLayoutInflater(LayoutInflater inflater) {
-        mInflater = inflater;
     }
 
     /**

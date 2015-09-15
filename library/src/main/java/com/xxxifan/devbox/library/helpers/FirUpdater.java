@@ -6,8 +6,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.afollestad.materialdialogs.MaterialDialog;
-import com.xxxifan.devbox.library.AppConfig;
-import com.xxxifan.devbox.library.Keys;
+import com.xxxifan.devbox.library.AppPref;
+import com.xxxifan.devbox.library.Devbox;
 import com.xxxifan.devbox.library.R;
 import com.xxxifan.devbox.library.callbacks.http.JsonCallback;
 import com.xxxifan.devbox.library.callbacks.http.SimpleJsonCallback;
@@ -44,7 +44,7 @@ public class FirUpdater {
      * @param checkInterval in milliseconds.
      */
     public static void checkUpdate(Context context, int checkInterval) {
-        if (System.currentTimeMillis() - AppConfig.getLong(Keys.PREF_LAST_UPDATE, 0) >
+        if (System.currentTimeMillis() - AppPref.getLong(Devbox.PREF_LAST_UPDATE, 0) >
                 checkInterval) {
             checkUpdate(context);
         }
@@ -66,7 +66,7 @@ public class FirUpdater {
                 }
 
                 // update check time
-                AppConfig.putLong(Keys.PREF_LAST_UPDATE, System.currentTimeMillis());
+                AppPref.putLong(Devbox.PREF_LAST_UPDATE, System.currentTimeMillis());
             }
         });
     }

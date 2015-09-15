@@ -3,23 +3,32 @@ package com.xxxifan.devbox.library.ui;
 import android.content.Context;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.LayoutRes;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.text.TextUtils;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 
 import com.afollestad.materialdialogs.MaterialDialog;
-import com.xxxifan.devbox.library.Keys;
+import com.xxxifan.devbox.library.Devbox;
+import com.xxxifan.devbox.library.entity.CustomEvent;
 import com.xxxifan.devbox.library.tools.ViewUtils;
+
+import de.greenrobot.event.EventBus;
 
 /**
  * Created by Bob Peng on 2015/5/7.
  */
-public class BaseFragment extends Fragment {
+public abstract class BaseFragment extends Fragment {
     protected Context mContext;
 
     private MaterialDialog mLoadingDialog;
 
     private boolean mIsDataLoaded = false;
     private boolean mLazyLoad = false;
+    private int mLayoutId;
     private String mTabTitle;
 
     @Override
@@ -32,6 +41,16 @@ public class BaseFragment extends Fragment {
         if (data != null) {
             onBundleReceived(data);
         }
+
+        mLayoutId = getLayoutId();
+    }
+
+    @Nullable
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View view = inflater.inflate(mLayoutId, container, false);
+        initView(view);
+        return view;
     }
 
     @Override
@@ -67,7 +86,7 @@ public class BaseFragment extends Fragment {
      * Called when fragment initialized with a Bundle in onCreate().
      */
     public void onBundleReceived(Bundle data) {
-        String title = data.getString(Keys.EXTRA_TITLE);
+        String title = data.getString(Devbox.EXTRA_TITLE);
         setTabTitle(TextUtils.isEmpty(title) ? "" : title);
     }
 
@@ -139,5 +158,26 @@ public class BaseFragment extends Fragment {
             mLoadingDialog.dismiss();
         }
     }
+
+    protected void postEvent(CustomEvent event, Class target) {
+        EventBus.getDefault().post(event);
+    }
+
+    protected void postStickyEvent(CustomEvent event, Class target) {
+        EventBus.getDefault().postSticky(event);
+    }
+
+    protected void registerEventBus(BaseFragment fragment) {
+        EventBus.getDefault().registerSticky(fragment);
+    }
+
+    protected void unregisterEventBus(BaseFragment fragment) {
+        EventBus.getDefault().unregister(fragment);
+    }
+
+    @LayoutRes
+    protected abstract int getLayoutId();
+
+    protected abstract void initView(View rootView);
 
 }

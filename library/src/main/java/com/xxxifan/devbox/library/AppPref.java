@@ -7,17 +7,17 @@ import android.preference.PreferenceManager;
 /**
  * Created by xifan on 15-7-14.
  */
-public class AppConfig {
+public class AppPref {
 
-    private AppConfig() {
+    private AppPref() {
     }
 
     public static SharedPreferences getPrefs() {
-        return PreferenceManager.getDefaultSharedPreferences(AppDelegate.get());
+        return PreferenceManager.getDefaultSharedPreferences(Devbox.getAppDelegate());
     }
 
     public static SharedPreferences getPrefs(String name) {
-        return AppDelegate.get().getSharedPreferences(name, Context.MODE_MULTI_PROCESS);
+        return Devbox.getAppDelegate().getSharedPreferences(name, Context.MODE_PRIVATE);
     }
 
     public static SharedPreferences.Editor getEditor() {

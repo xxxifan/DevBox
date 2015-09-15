@@ -2,7 +2,7 @@ package com.xxxifan.devbox.demo;
 
 import android.app.Application;
 
-import com.xxxifan.devbox.library.AppDelegate;
+import com.xxxifan.devbox.library.Devbox;
 
 /**
  * Created by xifan on 15-7-16.
@@ -20,6 +20,6 @@ public class App extends Application {
         sInstance = this;
 
         // init module
-        AppDelegate.install(this);
+        Devbox.install(this);
     }
 }
