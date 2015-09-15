@@ -4,9 +4,7 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 
 import com.astuetz.PagerSlidingTabStrip;
 import com.xxxifan.devbox.library.R;
@@ -25,13 +23,15 @@ public class BasePagerFragment extends BaseFragment {
     private PagerSlidingTabStrip mPagerStrip;
     private BasePagerAdapter mPagerAdapter;
 
-    @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.view_base_pager, container, false);
-        mViewPager = ButterKnife.findById(view, R.id.base_viewpager);
-        ButterKnife.findById(view, R.id.base_viewpager_strip);
-        return view;
+    protected int getLayoutId() {
+        return R.layout.view_base_pager;
+    }
+
+    @Override
+    protected void initView(View rootView) {
+        mViewPager = ButterKnife.findById(rootView, R.id.base_viewpager);
+        ButterKnife.findById(rootView, R.id.base_viewpager_strip);
     }
 
     @Override

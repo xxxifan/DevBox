@@ -5,6 +5,7 @@ import android.view.View;
 
 /**
  * Created by xifan on 15-7-22.
+ * UiController, support a set of default life circle control. Use {@link BaseActivity#registerUiController(UiController)} to control.
  */
 public abstract class UiController {
     private View mView;
@@ -14,9 +15,10 @@ public abstract class UiController {
             throw new IllegalArgumentException("view cannot be null");
         }
         mView = view;
+        initView(view);
     }
 
-    public View getRootView() {
+    public View getView() {
         return mView;
     }
 
@@ -26,11 +28,14 @@ public abstract class UiController {
     public void onPause() {
     }
 
+    public void onDestroy() {
+        mView = null;
+    }
+
+
     protected Context getContext() {
         return mView == null ? null : mView.getContext();
     }
 
-    public void onDestroy() {
-        mView = null;
-    }
+    protected abstract void initView(View view);
 }

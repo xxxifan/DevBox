@@ -14,7 +14,7 @@ import android.view.Display;
 import android.view.ViewConfiguration;
 import android.view.WindowManager;
 
-import com.xxxifan.devbox.library.AppDelegate;
+import com.xxxifan.devbox.library.Devbox;
 import com.xxxifan.devbox.library.callbacks.CommandCallback;
 
 import java.io.File;
@@ -52,12 +52,12 @@ public class Utils {
                     }
 
                     // check cm settings
-                    boolean forceCm = Settings.Secure.getInt(AppDelegate.get().getContentResolver(),
+                    boolean forceCm = Settings.Secure.getInt(Devbox.getAppDelegate().getContentResolver(),
                             CONFIG_FORCE_NAVBAR, 0) == 1;
 
                     // fallback, use common method.
                     sHasTranslucentNavBar = forceCm || readInternalBoolean(CONFIG_SHOW_NAVBAR,
-                            AppDelegate.get().getResources(), !ViewConfiguration.get(AppDelegate.get())
+                            Devbox.getAppDelegate().getResources(), !ViewConfiguration.get(Devbox.getAppDelegate())
                                     .hasPermanentMenuKey());
                 }
             });
@@ -75,11 +75,11 @@ public class Utils {
     }
 
     public static File getCacheDir() {
-        return AppDelegate.get().getCacheDir();
+        return Devbox.getAppDelegate().getCacheDir();
     }
 
     public static File getTempFile(String filename) {
-        return new File(AppDelegate.get().getCacheDir(), filename);
+        return new File(Devbox.getAppDelegate().getCacheDir(), filename);
     }
 
     public static boolean hasMediaMounted() {
@@ -96,7 +96,7 @@ public class Utils {
 
     public static int getSystemBarHeight() {
         if (sStatusBarHeight == 0) {
-            sStatusBarHeight = readInternalDimen(CONFIG_TOOLBAR_HEIGHT, AppDelegate.get().getResources(),
+            sStatusBarHeight = readInternalDimen(CONFIG_TOOLBAR_HEIGHT, Devbox.getAppDelegate().getResources(),
                     ViewUtils.dp2px(24));
         }
         return sStatusBarHeight;
@@ -104,11 +104,11 @@ public class Utils {
 
     public static int getDeviceScreenHeight() {
         if (sScreenHeight == 0) {
-            Display display = ((WindowManager) AppDelegate.get().getSystemService(Context.WINDOW_SERVICE))
+            Display display = ((WindowManager) Devbox.getAppDelegate().getSystemService(Context.WINDOW_SERVICE))
                     .getDefaultDisplay();
             DisplayMetrics metrics = new DisplayMetrics();
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                ((WindowManager) AppDelegate.get().getSystemService(Context.WINDOW_SERVICE))
+                ((WindowManager) Devbox.getAppDelegate().getSystemService(Context.WINDOW_SERVICE))
                         .getDefaultDisplay().getRealMetrics(metrics);
                 sScreenHeight = metrics.heightPixels;
             } else {
@@ -128,7 +128,7 @@ public class Utils {
     public static int getNavBarHeight() {
         if (sNavBarHeight == 0) {
             int deviceScreenHeight = getDeviceScreenHeight();
-            int displayHeight = AppDelegate.get().getResources().getDisplayMetrics().heightPixels;
+            int displayHeight = Devbox.getAppDelegate().getResources().getDisplayMetrics().heightPixels;
             sNavBarHeight = deviceScreenHeight - displayHeight;
             if (sNavBarHeight <= 0) {
                 sNavBarHeight = ViewUtils.dp2px(48);
@@ -141,8 +141,8 @@ public class Utils {
      * Get app package info.
      */
     public static PackageInfo getPackageInfo() throws PackageManager.NameNotFoundException {
-        PackageManager manager = AppDelegate.get().getPackageManager();
-        return manager.getPackageInfo(AppDelegate.get().getPackageName(), 0);
+        PackageManager manager = Devbox.getAppDelegate().getPackageManager();
+        return manager.getPackageInfo(Devbox.getAppDelegate().getPackageName(), 0);
     }
 
     public static long getVersionCode() {
@@ -163,15 +163,26 @@ public class Utils {
         }
     }
 
-    public static void postTask(Runnable runnable) {
-        HandlerThread handlerThread = AppDelegate.getWorkerThread();
+    private static HandlerThread getWorkerThread() {
+        HandlerThread handlerThread = Devbox.getWorkerThread();
         if (handlerThread.getState() == Thread.State.NEW) {
             handlerThread.start();
         }
+        return handlerThread;
+    }
+
+    public static void postTask(Runnable runnable) {
         if (mWorkerHandler == null) {
-            mWorkerHandler = new Handler(handlerThread.getLooper());
+            mWorkerHandler = new Handler(getWorkerThread().getLooper());
         }
         mWorkerHandler.post(runnable);
+    }
+
+    public static Handler getWorkerhandler() {
+        if (mWorkerHandler == null) {
+            mWorkerHandler = new Handler(getWorkerThread().getLooper());
+        }
+        return mWorkerHandler;
     }
 
 }

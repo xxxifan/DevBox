@@ -7,7 +7,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import com.afollestad.materialdialogs.MaterialDialog;
-import com.xxxifan.devbox.library.AppDelegate;
+import com.xxxifan.devbox.library.Devbox;
 import com.xxxifan.devbox.library.R;
 
 /**
@@ -27,7 +27,7 @@ public class ViewUtils {
     public static float getDensity() {
         if (sDensity == 0) {
             try {
-                sDensity = AppDelegate.get().getResources().getDisplayMetrics().density;
+                sDensity = Devbox.getAppDelegate().getResources().getDisplayMetrics().density;
             } catch (Exception e) {
                 sDensity = 2f;
             }

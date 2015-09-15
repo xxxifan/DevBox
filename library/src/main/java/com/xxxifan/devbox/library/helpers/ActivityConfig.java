@@ -6,7 +6,7 @@ import android.support.annotation.LayoutRes;
 import android.view.View;
 import android.view.WindowManager;
 
-import com.xxxifan.devbox.library.AppDelegate;
+import com.xxxifan.devbox.library.Devbox;
 import com.xxxifan.devbox.library.R;
 import com.xxxifan.devbox.library.tools.Log;
 import com.xxxifan.devbox.library.ui.BaseActivity;
@@ -28,8 +28,9 @@ public class ActivityConfig {
     private int mDrawerHeaderResId;
     private int mDrawerIconId;
     private int mDrawerMenuId;
+    private int mContainerId;
     private boolean mUseToolbar;
-    private boolean mIsLinearRoot;
+    private boolean mIsDarkToolbar;
     private boolean mShowHomeAsUpKey;
     private boolean mIsFitSystemWindow;
     private boolean mIsDrawerLayout;
@@ -40,12 +41,13 @@ public class ActivityConfig {
 
     public static ActivityConfig newInstance(BaseActivity activity) {
         ActivityConfig config = new ActivityConfig(activity);
-        config.setToolbarColor(AppDelegate.get().getResources().getColor(R.color.colorPrimary));
+        config.setToolbarColor(Devbox.getAppDelegate().getResources().getColor(R.color.colorPrimary));
         config.setUseToolbar(true);
+        config.setIsDarkToolbar(true);
         config.setShowHomeAsUpKey(true);
-        config.setIsLinearRoot(true);
         config.setTranslucentStatusBar(true);
         config.setFitSystemWindow(true);
+        config.setContainerId(R.id.fragment_container);
         return config;
     }
 
@@ -63,11 +65,26 @@ public class ActivityConfig {
     }
 
     /**
-     *  configure to use toolbar, default true
+     * configure to use toolbar, default true.
      */
     public ActivityConfig setUseToolbar(boolean useToolbar) {
         mUseToolbar = useToolbar;
         return this;
+    }
+
+    /**
+     * set toolbar theme, true is dark theme and it's default, else light theme
+     */
+    public ActivityConfig setIsDarkToolbar(boolean isDarkToolbar) {
+        mIsDarkToolbar = isDarkToolbar;
+        return this;
+    }
+
+    /**
+     * @return use dark theme toolbar or not
+     */
+    public boolean isDarkToolbar() {
+        return mIsDarkToolbar;
     }
 
     public boolean isShowHomeAsUpKey() {
@@ -79,18 +96,6 @@ public class ActivityConfig {
      */
     public ActivityConfig setShowHomeAsUpKey(boolean enable) {
         mShowHomeAsUpKey = enable;
-        return this;
-    }
-
-    public boolean isLinearRoot() {
-        return mIsLinearRoot;
-    }
-
-    /**
-     * configure to whether is linear root layout, default true
-     */
-    public ActivityConfig setIsLinearRoot(boolean isLinearRoot) {
-        mIsLinearRoot = isLinearRoot;
         return this;
     }
 
@@ -178,30 +183,43 @@ public class ActivityConfig {
         return mIsDrawerLayout;
     }
 
+    public DrawerMenuClickListener getDrawerMenuClickListener() {
+        return mMenuClickListener;
+    }
+
     public ActivityConfig setDrawerMenuClickListener(DrawerMenuClickListener listener) {
         mMenuClickListener = listener;
         return this;
     }
 
-    public DrawerMenuClickListener getDrawerMenuClickListener() {
-        return mMenuClickListener;
+    /**
+     * @return preset root layout id
+     */
+    public int getRootResId() {
+        return isDrawerLayout() ? R.layout.activity_drawer : R.layout.activity_toolbar;
     }
 
-    public int getRootResId() {
-        int linearRoot = isDrawerLayout() ? R.layout.activity_drawer : R.layout.activity_toolbar;
-        int nestRoot = isDrawerLayout() ? R.layout.activity_drawer_nest : R.layout.activity_toolbar_nest;
-        return mIsLinearRoot ? linearRoot : nestRoot;
+    /**
+     * @return preset fragment container id
+     */
+    public int getContainerId() {
+        return mContainerId;
+    }
+
+    public ActivityConfig setContainerId(int resId) {
+        mContainerId = resId;
+        return this;
     }
 
     @Override
     public String toString() {
         return super.toString() + "\nmToolbarColor=" + mToolbarColor + "\nmDrawerHeaderResId" +
-                "=" + mDrawerHeaderResId + "\nmUseToolbar=" + mUseToolbar + "\nmIsLinearRoot=" +
-                mIsLinearRoot + "\nmShowHomeAsUpKey=" + mShowHomeAsUpKey + "\nmIsFitSystemWindow=" +
+                "=" + mDrawerHeaderResId + "\nmUseToolbar=" + mUseToolbar + "\nmShowHomeAsUpKey=" +
+                mShowHomeAsUpKey + "\nmIsFitSystemWindow=" +
                 mIsFitSystemWindow;
     }
 
-    public interface DrawerMenuClickListener{
+    public interface DrawerMenuClickListener {
         void onMenuClick(View v, int position);
     }
 }

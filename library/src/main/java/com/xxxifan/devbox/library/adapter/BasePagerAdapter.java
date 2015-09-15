@@ -4,7 +4,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 
-import com.xxxifan.devbox.library.Keys;
+import com.xxxifan.devbox.library.Devbox;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +38,7 @@ public class BasePagerAdapter extends FragmentPagerAdapter {
                 mTitles = new String[mFragmentList.size()];
                 try {
                     for (int i = 0; i < mFragmentList.size(); i++) {
-                        mTitles[i] = mFragmentList.get(i).getArguments().getString(Keys.EXTRA_TITLE);
+                        mTitles[i] = mFragmentList.get(i).getArguments().getString(Devbox.EXTRA_TITLE);
                     }
                 } catch (Exception e) {
                     return "";

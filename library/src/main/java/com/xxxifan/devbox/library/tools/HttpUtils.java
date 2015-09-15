@@ -15,7 +15,7 @@ import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.RequestBody;
-import com.xxxifan.devbox.library.AppDelegate;
+import com.xxxifan.devbox.library.Devbox;
 import com.xxxifan.devbox.library.R;
 import com.xxxifan.devbox.library.entity.BaseEntity;
 import com.xxxifan.devbox.library.receivers.DownloadReceiver;
@@ -135,8 +135,8 @@ public class HttpUtils {
             if (mDownloadReceiver == null) {
                 mDownloadReceiver = new DownloadReceiver(filename);
             }
-            mDownloadReceiver.register(AppDelegate.get());
-            DownloadManager manager = (DownloadManager) AppDelegate.get().getSystemService(Context.DOWNLOAD_SERVICE);
+            mDownloadReceiver.register(Devbox.getAppDelegate());
+            DownloadManager manager = (DownloadManager) Devbox.getAppDelegate().getSystemService(Context.DOWNLOAD_SERVICE);
             request.setMimeType("application/vnd.android.package-archive");
             return manager.enqueue(request);
         } catch (Exception e) {
@@ -161,9 +161,12 @@ public class HttpUtils {
             request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
             return request;
         } else {
-            Toast.makeText(AppDelegate.get(), R.string.msg_cannot_download_update, Toast.LENGTH_SHORT).show();
+            Toast.makeText(Devbox.getAppDelegate(), R.string.msg_cannot_download_update, Toast.LENGTH_SHORT).show();
             return null;
         }
     }
 
+    public static void onAvosException(String e) {
+        Toast.makeText(Devbox.getAppDelegate(), e, Toast.LENGTH_SHORT).show();
+    }
 }
