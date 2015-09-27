@@ -61,7 +61,7 @@ public abstract class BaseActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         mContext = this;
-        onCreateActivityConfig(getConfig());
+        onConfigureActivity(getConfig());
         super.onCreate(savedInstanceState);
         setContentView(getLayoutId());
     }
@@ -315,7 +315,7 @@ public abstract class BaseActivity extends AppCompatActivity {
     /**
      * Set ActivityConfig, called before super.onCreate()
      */
-    protected abstract void onCreateActivityConfig(ActivityConfig config);
+    protected abstract void onConfigureActivity(ActivityConfig config);
 
     /**
      * @return activity layout id, called while setContentView()

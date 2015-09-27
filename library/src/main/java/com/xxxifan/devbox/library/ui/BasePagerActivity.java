@@ -31,7 +31,7 @@ public class BasePagerActivity extends BaseActivity {
     }
 
     @Override
-    protected void onCreateActivityConfig(ActivityConfig config) {
+    protected void onConfigureActivity(ActivityConfig config) {
     }
 
     @Override
