@@ -13,17 +13,20 @@ public class Once {
     private Once() {
     }
 
-    public static void check(String key, OnceCallback callback) {
-        if (callback != null) {
-            SharedPreferences pref = AppPref.getPrefs("once");
-            if (!pref.getBoolean(key, false)) {
-                callback.onOnce();
-                pref.edit().putBoolean(key, true).apply();
-            }
+    /**
+     * @return isOnce
+     */
+    public static boolean check(String key) {
+        SharedPreferences pref = AppPref.getPrefs("once");
+        if (!pref.getBoolean(key, false)) {
+            pref.edit().putBoolean(key, true).apply();
+            return true;
         }
+        return false;
     }
 
-    public interface OnceCallback {
-        void onOnce();
+    public static void reset(String key) {
+        SharedPreferences pref = AppPref.getPrefs("once");
+        pref.edit().putBoolean(key, false).apply();
     }
 }
