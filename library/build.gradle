@@ -12,31 +12,35 @@ android {
 }
 
 dependencies {
+    // Support
     compile fileTree(dir: 'libs', include: ['*.jar'])
-
-    // Base
     compile 'com.android.support:appcompat-v7:23.1.1'
 //    compile 'com.android.support:design:23.1.1'
     compile 'com.android.support:recyclerview-v7:23.1.1'
+
     compile 'com.github.bumptech.glide:glide:3.6.1'
     compile 'com.github.bumptech.glide:okhttp-integration:1.3.1'
-    compile 'com.squareup.okhttp:okhttp:2.5.0'
+    compile 'com.squareup.okhttp:okhttp:2.7.0'
 //    compile 'com.squareup.retrofit:retrofit:2.0.0-beta2'
+//    compile 'com.squareup.retrofit:adapter-rxjava:2.0.0-beta2'
+//    compile 'com.squareup.retrofit:converter-gson:2.0.0-beta2'
     compile 'com.jpardogo.materialtabstrip:library:1.1.0'
-    compile('com.github.afollestad.material-dialogs:core:0.8.5.1@aar') {
+    compile('com.github.afollestad.material-dialogs:core:0.8.5.3@aar') {
         transitive = true
     }
 
     // Tools
     compile 'com.jakewharton:butterknife:7.0.1'
-    compile 'io.reactivex:rxandroid:1.0.1'
-    compile 'io.reactivex:rxjava:1.0.16'
-    compile 'com.makeramen:roundedimageview:2.2.1'
+    compile 'io.reactivex:rxandroid:1.1.0'
+    compile 'io.reactivex:rxjava:1.1.0'
     compile 'com.nineoldandroids:library:2.4.0'
     compile 'de.greenrobot:eventbus:2.4.0'
     compile 'com.google.code.gson:gson:2.4'
 //    compile 'com.alibaba:fastjson:1.1.46.android'
-
-//    compile 'com.github.clans:fab:1.6.1'
-
+    compile 'com.jakewharton.threetenabp:threetenabp:1.0.3'
+//    compile 'jp.co.cyberagent.android.gpuimage:gpuimage-library:1.3.1'
+    compile ('jp.wasabeef:glide-transformations:1.3.1') {
+        exclude group: 'com.github.bumptech.glide', module: 'glide'
+    }
+//    compile 'com.github.clans:fab:1.6.2'
 }
