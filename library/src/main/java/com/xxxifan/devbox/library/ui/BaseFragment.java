@@ -1,20 +1,25 @@
 package com.xxxifan.devbox.library.ui;
 
-import android.content.Context;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.LayoutRes;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.afollestad.materialdialogs.MaterialDialog;
+import com.umeng.analytics.MobclickAgent;
 import com.xxxifan.devbox.library.Devbox;
 import com.xxxifan.devbox.library.entity.CustomEvent;
+import com.xxxifan.devbox.library.helpers.ActivityConfig;
+import com.xxxifan.devbox.library.tools.Log;
 import com.xxxifan.devbox.library.tools.ViewUtils;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import de.greenrobot.event.EventBus;
 
@@ -22,9 +27,10 @@ import de.greenrobot.event.EventBus;
  * Created by Bob Peng on 2015/5/7.
  */
 public abstract class BaseFragment extends Fragment {
-    protected Context mContext;
 
     private MaterialDialog mLoadingDialog;
+    private LayoutInflater mInflater;
+    private List<ChildUiController> mUiControllers;
 
     private boolean mIsDataLoaded = false;
     private boolean mLazyLoad = false;
@@ -34,7 +40,6 @@ public abstract class BaseFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mContext = getActivity();
         setHasOptionsMenu(true);
 
         Bundle data = getArguments();
@@ -48,6 +53,7 @@ public abstract class BaseFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        mInflater = inflater;
         View view = inflater.inflate(mLayoutId, container, false);
         initView(view);
         return view;
@@ -56,8 +62,30 @@ public abstract class BaseFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        MobclickAgent.onPageStart(getSimpleName());
+
+        // handle ui controller resume
+        if (mUiControllers != null && mUiControllers.size() > 0) {
+            for (int i = 0; i < mUiControllers.size(); i++) {
+                mUiControllers.get(i).onResume();
+            }
+        }
+
         if (!mIsDataLoaded && !mLazyLoad) {
             setDataLoaded(onDataLoad());
+        }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        MobclickAgent.onPageEnd(getSimpleName());
+
+        // handle ui controller pause
+        if (mUiControllers != null && mUiControllers.size() > 0) {
+            for (int i = 0; i < mUiControllers.size(); i++) {
+                mUiControllers.get(i).onPause();
+            }
         }
     }
 
@@ -73,13 +101,15 @@ public abstract class BaseFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         dismissDialog();
-    }
 
-    public Context getContext() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            super.getContext();
+        // unregister ui controllers
+        if (mUiControllers != null && mUiControllers.size() > 0) {
+            for (int i = 0; i < mUiControllers.size(); i++) {
+                mUiControllers.get(i).onDestroy();
+            }
+            mUiControllers.clear();
+            mUiControllers = null;
         }
-        return mContext;
     }
 
     /**
@@ -102,7 +132,7 @@ public abstract class BaseFragment extends Fragment {
     }
 
     /**
-     * a good point to load data, called on setMenuVisibility() at first time and later on onResume().
+     * a good point to load data, called on setUserVisibleHint() at first time and later on onResume().
      *
      * @return whether data load successful.
      */
@@ -133,18 +163,22 @@ public abstract class BaseFragment extends Fragment {
         mTabTitle = title;
     }
 
-    protected MaterialDialog getLoadingDialog() {
+    /**
+     * Hacky way to use fragment lifecycle to control dialog
+     * You shouldn't use {@link #getLoadingDialog()} anymore
+     */
+    protected void setCurrentDialog(MaterialDialog newDialog) {
+        mLoadingDialog = newDialog;
+    }
+
+    public MaterialDialog getLoadingDialog() {
         if (mLoadingDialog == null) {
             mLoadingDialog = ViewUtils.getLoadingDialog(getContext(), null);
         }
         return mLoadingDialog;
     }
 
-    protected void setLoadingDialog(MaterialDialog dialog) {
-        mLoadingDialog = dialog;
-    }
-
-    protected MaterialDialog getLoadingDialog(String msg) {
+    public MaterialDialog getLoadingDialog(String msg) {
         if (mLoadingDialog == null) {
             mLoadingDialog = ViewUtils.getLoadingDialog(getContext(), msg);
         } else {
@@ -153,10 +187,64 @@ public abstract class BaseFragment extends Fragment {
         return mLoadingDialog;
     }
 
-    protected void dismissDialog() {
-        if (mLoadingDialog != null && mLoadingDialog.isShowing()) {
-            mLoadingDialog.dismiss();
+    public void dismissDialog() {
+        ViewUtils.dismissDialog(mLoadingDialog);
+    }
+
+    /**
+     * @param addToBackStack add current fragment to back stack
+     */
+    public void checkoutFragment(Fragment fragment, boolean addToBackStack) {
+        checkoutFragment(fragment, false, addToBackStack);
+    }
+
+    /**
+     * @param detach         detach other fragments
+     * @param addToBackStack add current fragment to back stack
+     */
+    public void checkoutFragment(Fragment fragment, boolean detach, boolean addToBackStack) {
+        if (fragment == null) {
+            return;
         }
+
+        // get tag name
+        String tag = fragment.getTag();
+        if (TextUtils.isEmpty(tag)) {
+            if (fragment instanceof BaseFragment) {
+                tag = ((BaseFragment) fragment).getSimpleName();
+            } else {
+                tag = fragment.getClass().getName();
+            }
+        }
+
+        FragmentTransaction transaction = getFragmentManager().beginTransaction();
+        List<Fragment> fragmentList = getFragmentManager().getFragments();
+        if (fragmentList != null && fragmentList.size() > 0) {
+            // hide other fragment and check if fragment is exist
+            for (Fragment oldFragment : fragmentList) {
+                if (oldFragment != null && oldFragment.isVisible()) {
+                    transaction.hide(oldFragment);
+                    if (detach) {
+                        transaction.detach(oldFragment);
+                    }
+                }
+            }
+
+            if (addToBackStack) {
+                if (detach) {
+                    Log.e(this, "You cannot addToBackStack while detach bro");
+                } else {
+                    transaction.addToBackStack(getTag());
+                    transaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
+                }
+            }
+        }
+
+        if (!fragment.isAdded()) {
+            transaction.add(ActivityConfig.DEFAULT_FRAGMENT_CONTAINER_ID, fragment, tag);
+        }
+        transaction.show(fragment);
+        transaction.commitAllowingStateLoss();
     }
 
     protected void postEvent(CustomEvent event, Class target) {
@@ -175,9 +263,28 @@ public abstract class BaseFragment extends Fragment {
         EventBus.getDefault().unregister(fragment);
     }
 
+    /**
+     * register controllers, so that BaseFragment can do some lifecycle work automatically
+     */
+    protected void registerUiController(ChildUiController controller) {
+        if (mUiControllers == null) {
+            mUiControllers = new ArrayList<>();
+        }
+        mUiControllers.add(controller);
+    }
+
+    protected LayoutInflater getLayoutInflater() {
+        return mInflater;
+    }
+
     @LayoutRes
     protected abstract int getLayoutId();
 
     protected abstract void initView(View rootView);
+
+    /**
+     * @return human readable class name for tracking.
+     */
+    protected abstract String getSimpleName();
 
 }

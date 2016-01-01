@@ -6,7 +6,6 @@ import android.support.annotation.LayoutRes;
 import android.view.View;
 import android.view.WindowManager;
 
-import com.xxxifan.devbox.library.Devbox;
 import com.xxxifan.devbox.library.R;
 import com.xxxifan.devbox.library.tools.Log;
 import com.xxxifan.devbox.library.ui.BaseActivity;
@@ -18,37 +17,61 @@ import java.lang.ref.WeakReference;
  */
 public class ActivityConfig {
 
-    private WeakReference<BaseActivity> mActivity;
+    public static final int DEFAULT_FRAGMENT_CONTAINER_ID = R.id.fragment_container;
 
+    public static final int DEFAULT_DRAWER_LAYOUT = R.layout.activity_drawer;
+    public static final int BASE_ACTIVITY_LAYOUT = R.layout._internal_activity_base;
+
+    private WeakReference<BaseActivity> mActivityRef;
     private DrawerMenuClickListener mMenuClickListener;
 
+    @LayoutRes
+    private int mCustomToolbarId;
     @ColorInt
     private int mToolbarColor;
     @LayoutRes
     private int mDrawerHeaderResId;
+
     private int mDrawerIconId;
     private int mDrawerMenuId;
     private int mContainerId;
+
     private boolean mUseToolbar;
+    private boolean mUseCustomToolbar;
     private boolean mIsDarkToolbar;
     private boolean mShowHomeAsUpKey;
     private boolean mIsFitSystemWindow;
     private boolean mIsDrawerLayout;
 
     private ActivityConfig(BaseActivity activity) {
-        mActivity = new WeakReference<>(activity);
+        mActivityRef = new WeakReference<>(activity);
     }
 
     public static ActivityConfig newInstance(BaseActivity activity) {
         ActivityConfig config = new ActivityConfig(activity);
-        config.setToolbarColor(Devbox.getAppDelegate().getResources().getColor(R.color.colorPrimary));
+        config.setToolbarColor(activity.getResources().getColor(R.color.colorPrimary));
         config.setUseToolbar(true);
         config.setIsDarkToolbar(true);
         config.setShowHomeAsUpKey(true);
         config.setTranslucentStatusBar(true);
         config.setFitSystemWindow(true);
-        config.setContainerId(R.id.fragment_container);
+        config.setContainerId(DEFAULT_FRAGMENT_CONTAINER_ID);
         return config;
+    }
+
+    public int getCustomToolbarId() {
+        return mCustomToolbarId;
+    }
+
+    public ActivityConfig setCustomToolbarId(@LayoutRes int id) {
+        mCustomToolbarId = id;
+        return this;
+    }
+
+    public ActivityConfig setCustomToolbarController(ToolbarController.CustomToolbar customToolbar) {
+        mActivityRef.get().setCustomToolbarController(customToolbar);
+        mUseCustomToolbar = true;
+        return this;
     }
 
     public int getToolbarColor() {
@@ -103,14 +126,14 @@ public class ActivityConfig {
      * whether enable translucent status bar, default true
      */
     public ActivityConfig setTranslucentStatusBar(boolean enable) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && mActivity != null && mActivity.get()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && mActivityRef != null && mActivityRef.get()
                 != null) {
             if (enable) {
-                mActivity.get().getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+                mActivityRef.get().getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
             } else {
-                mActivity.get().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+                mActivityRef.get().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
             }
-        } else if (mActivity == null || mActivity.get() == null) {
+        } else if (mActivityRef == null || mActivityRef.get() == null) {
             Log.e(this, "Activity is null! translucent statusbar is not set");
         }
         return this;
@@ -120,15 +143,15 @@ public class ActivityConfig {
      * whether enable translucent nav bar, default false
      */
     public ActivityConfig setTranslucentNavBar(boolean enable) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && mActivity != null && mActivity.get()
-                != null) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && mActivityRef != null
+                && mActivityRef.get() != null) {
             if (enable) {
-                mActivity.get().getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
+                mActivityRef.get().getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
             } else {
-                mActivity.get().getWindow().clearFlags(WindowManager.LayoutParams
+                mActivityRef.get().getWindow().clearFlags(WindowManager.LayoutParams
                         .FLAG_TRANSLUCENT_NAVIGATION);
             }
-        } else if (mActivity == null || mActivity.get() == null) {
+        } else if (mActivityRef == null || mActivityRef.get() == null) {
             Log.e(this, "Activity is null! translucent navbar is not set");
         }
         return this;
@@ -147,9 +170,9 @@ public class ActivityConfig {
     }
 
     public ActivityConfig setTheme(int resId) {
-        if (mActivity != null && mActivity.get() != null) {
-            mActivity.get().setTheme(resId);
-        } else if (mActivity == null || mActivity.get() == null) {
+        if (mActivityRef != null && mActivityRef.get() != null) {
+            mActivityRef.get().setTheme(resId);
+        } else if (mActivityRef == null || mActivityRef.get() == null) {
             Log.e(this, "Activity is null! theme is not set");
         }
         return this;
@@ -196,7 +219,7 @@ public class ActivityConfig {
      * @return preset root layout id
      */
     public int getRootResId() {
-        return isDrawerLayout() ? R.layout.activity_drawer : R.layout.activity_toolbar;
+        return isDrawerLayout() ? DEFAULT_DRAWER_LAYOUT : BASE_ACTIVITY_LAYOUT;
     }
 
     /**
@@ -213,10 +236,22 @@ public class ActivityConfig {
 
     @Override
     public String toString() {
-        return super.toString() + "\nmToolbarColor=" + mToolbarColor + "\nmDrawerHeaderResId" +
-                "=" + mDrawerHeaderResId + "\nmUseToolbar=" + mUseToolbar + "\nmShowHomeAsUpKey=" +
-                mShowHomeAsUpKey + "\nmIsFitSystemWindow=" +
-                mIsFitSystemWindow;
+        return "ActivityConfig{" +
+                "mToolbarColor=" + mToolbarColor +
+                ", mDrawerHeaderResId=" + mDrawerHeaderResId +
+                ", mDrawerIconId=" + mDrawerIconId +
+                ", mDrawerMenuId=" + mDrawerMenuId +
+                ", mContainerId=" + mContainerId +
+                ", mUseToolbar=" + mUseToolbar +
+                ", mIsDarkToolbar=" + mIsDarkToolbar +
+                ", mShowHomeAsUpKey=" + mShowHomeAsUpKey +
+                ", mIsFitSystemWindow=" + mIsFitSystemWindow +
+                ", mIsDrawerLayout=" + mIsDrawerLayout +
+                '}';
+    }
+
+    public boolean isCustomToolbar() {
+        return mUseCustomToolbar;
     }
 
     public interface DrawerMenuClickListener {

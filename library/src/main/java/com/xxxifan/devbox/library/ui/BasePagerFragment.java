@@ -17,7 +17,7 @@ import butterknife.ButterKnife;
 /**
  * Created by xifan on 15-5-17.
  */
-public class BasePagerFragment extends BaseFragment {
+public abstract class BasePagerFragment extends BaseFragment {
 
     private ViewPager mViewPager;
     private PagerSlidingTabStrip mPagerStrip;

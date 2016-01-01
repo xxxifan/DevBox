@@ -1,7 +1,10 @@
 package com.xxxifan.devbox.library;
 
 import android.app.Application;
+import android.os.Handler;
 import android.os.HandlerThread;
+
+import com.xxxifan.devbox.library.tools.Log;
 
 /**
  * Created by xifan on 15-7-16.
@@ -14,9 +17,11 @@ public class Devbox {
 
     private static Application sApplication;
     private static HandlerThread sWorkerThread;
+    private static Handler sWorkerHandler;
 
-    public static void install(Application application) {
+    public static void install(Application application, boolean debugMode) {
         sApplication = application;
+        Log.debugMode = debugMode;
     }
 
     public static Application getAppDelegate() {
@@ -28,10 +33,29 @@ public class Devbox {
     }
 
     public static HandlerThread getWorkerThread() {
-        if (sWorkerThread == null) {
-            sWorkerThread = new HandlerThread("DevBoxTask", 3);
+        if (sWorkerThread == null || (!sWorkerThread.isAlive() | sWorkerThread.isInterrupted()
+                | sWorkerThread.getState() == Thread.State.TERMINATED)) {
+            synchronized (Devbox.class) {
+                sWorkerThread = new HandlerThread("DevBoxTask", 3);
+                sWorkerThread.start();
+            }
         }
         return sWorkerThread;
+    }
+
+    public static Handler getWorkerHandler() {
+        if (sWorkerHandler == null) {
+            synchronized (Devbox.class) {
+                sWorkerHandler = new Handler(getWorkerThread().getLooper());
+            }
+        } else {
+            if (sWorkerHandler.getLooper() == null) {
+                synchronized (Devbox.class) {
+                    sWorkerHandler = new Handler(getWorkerThread().getLooper());
+                }
+            }
+        }
+        return sWorkerHandler;
     }
 
 }

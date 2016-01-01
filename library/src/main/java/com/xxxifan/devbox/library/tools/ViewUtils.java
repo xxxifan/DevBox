@@ -1,5 +1,6 @@
 package com.xxxifan.devbox.library.tools;
 
+import android.app.Dialog;
 import android.content.Context;
 import android.graphics.Paint;
 import android.view.inputmethod.InputMethodManager;
@@ -16,7 +17,7 @@ import com.xxxifan.devbox.library.R;
 public class ViewUtils {
     private static float sDensity = 0;
 
-    private ViewUtils() {
+    protected ViewUtils() {
     }
 
     public static int dp2px(int dp) {
@@ -70,7 +71,13 @@ public class ViewUtils {
                 .build();
     }
 
-    public static MaterialDialog.Builder getDialogBuilder(Context context) {
+    public static void dismissDialog(Dialog dialog) {
+        if (dialog != null && dialog.isShowing()) {
+            dialog.dismiss();
+        }
+    }
+
+    public static MaterialDialog.Builder getSimpleDialogBuilder(Context context) {
         return new MaterialDialog.Builder(context)
                 .positiveText(android.R.string.ok)
                 .negativeText(android.R.string.cancel);

@@ -242,7 +242,7 @@ public abstract class BaseRecyclerFragment extends BaseFragment {
     private class ScrollListener extends RecyclerView.OnScrollListener {
         @Override
         public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-            if (dy > 0 && !recyclerView.canScrollVertically(1) && !mIsDataEnd) {
+            if (dy > 0 && !recyclerView.canScrollVertically(1) && !isDataEnd()) {
                 onScrolledToEnd();
             }
         }

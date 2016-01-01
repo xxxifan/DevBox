@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <include layout="@layout/activity_toolbar" />
+    <include layout="@layout/_internal_activity_base" />
 
     <ListView
         android:id="@+id/drawer_item_list"

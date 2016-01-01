@@ -1,6 +1,5 @@
 package com.xxxifan.devbox.library.ui;
 
-import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
 import android.view.View;
@@ -9,7 +8,6 @@ import android.widget.FrameLayout;
 import com.astuetz.PagerSlidingTabStrip;
 import com.xxxifan.devbox.library.R;
 import com.xxxifan.devbox.library.adapter.BasePagerAdapter;
-import com.xxxifan.devbox.library.helpers.ActivityConfig;
 
 import java.util.List;
 
@@ -18,21 +16,11 @@ import butterknife.ButterKnife;
 /**
  * Created by Bob Peng on 2015/5/12.
  */
-public class BasePagerActivity extends BaseActivity {
+public abstract class BasePagerActivity extends BaseActivity {
 
     private ViewPager mViewPager;
     private PagerSlidingTabStrip mPagerStrip;
     private BasePagerAdapter mPagerAdapter;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setupViewPager(initFragments(savedInstanceState));
-    }
-
-    @Override
-    protected void onConfigureActivity(ActivityConfig config) {
-    }
 
     @Override
     protected int getLayoutId() {
@@ -45,20 +33,12 @@ public class BasePagerActivity extends BaseActivity {
         mPagerStrip = ButterKnife.findById(rootView, R.id.base_viewpager_strip);
     }
 
-    /**
-     * Init fragments, return null if no saved fragments, which means no need to create new instances.
-     */
-    protected List<Fragment> initFragments(Bundle savedInstanceState) {
-        if (savedInstanceState != null) {
-            List<Fragment> fragmentList = getSupportFragmentManager().getFragments();
-            if (fragmentList != null && fragmentList.size() > 0) {
-                return fragmentList;
-            }
-        }
-        return null;
+    @Override
+    protected void onCreateFragment(List<Fragment> savedFragments) {
+        onSetupViewPager(initFragments(savedFragments));
     }
 
-    protected void setupViewPager(List<Fragment> fragments) {
+    protected void onSetupViewPager(List<Fragment> fragments) {
         if (fragments != null && !fragments.isEmpty()) {
             mViewPager.setAdapter(mPagerAdapter = new BasePagerAdapter(getSupportFragmentManager(),
                     fragments));
@@ -103,4 +83,11 @@ public class BasePagerActivity extends BaseActivity {
     protected BasePagerAdapter getPagerAdapter() {
         return mPagerAdapter;
     }
+
+    /**
+     * proper time to init fragments inside viewpager
+     *
+     * @param savedInstanceState null if no saved fragments, which means needs to create new instances.
+     **/
+    protected abstract List<Fragment> initFragments(List<Fragment> savedInstanceState);
 }

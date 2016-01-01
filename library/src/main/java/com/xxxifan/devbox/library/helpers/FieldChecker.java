@@ -12,9 +12,30 @@ public class FieldChecker {
         return checkEmptyField(item) > -1;
     }
 
+    /**
+     * @return first empty field position, -1 if no empty field
+     */
     public static int checkEmptyField(EditText... items) {
         for (int i = 0, s = items.length; i < s; i++) {
-            if (TextUtils.isEmpty(items[i].getText())) {
+            if (items[i] == null || TextUtils.isEmpty(items[i].getText())) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * @return first empty field position, -1 if no empty field
+     */
+    public static int checkField(EditText[] items, CheckFilter filter) {
+        if (filter == null) {
+            // 憋逗
+            return -1;
+        }
+
+        for (int i = 0, s = items.length; i < s; i++) {
+            boolean isFilter = filter.onFilter(items[i].getText());
+            if (!isFilter) {
                 return i;
             }
         }
@@ -38,6 +59,10 @@ public class FieldChecker {
         }
 
         return result;
+    }
+
+    public abstract class CheckFilter{
+        public abstract boolean onFilter(CharSequence str);
     }
 
 }
