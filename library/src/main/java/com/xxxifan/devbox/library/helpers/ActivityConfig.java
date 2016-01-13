@@ -68,8 +68,8 @@ public class ActivityConfig {
         return this;
     }
 
-    public ActivityConfig setCustomToolbarController(ToolbarController.CustomToolbar customToolbar) {
-        mActivityRef.get().setCustomToolbarController(customToolbar);
+    public ActivityConfig setCustomToolbarController(ToolbarController.Handler handler) {
+        mActivityRef.get().setCustomToolbarHandler(handler);
         mUseCustomToolbar = true;
         return this;
     }

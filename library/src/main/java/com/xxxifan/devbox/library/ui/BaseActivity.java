@@ -5,11 +5,14 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.ColorInt;
+import android.support.annotation.ColorRes;
+import android.support.annotation.DrawableRes;
 import android.support.annotation.IdRes;
 import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -19,6 +22,7 @@ import android.view.View;
 import android.view.ViewStub;
 import android.widget.FrameLayout;
 
+import com.umeng.analytics.MobclickAgent;
 import com.xxxifan.devbox.library.Devbox;
 import com.xxxifan.devbox.library.R;
 import com.xxxifan.devbox.library.entity.CustomEvent;
@@ -43,12 +47,14 @@ public abstract class BaseActivity extends AppCompatActivity {
     private static final int TOOLBAR_DARK_LAYOUT = R.layout.view_toolbar_dark;
     private static final int TOOLBAR_LIGHT_LAYOUT = R.layout.view_toolbar_light;
     private static final int TOOLBAR_CUSTOM_LAYOUT = R.layout.view_custom_toolbar;
+    private static final int TOOLBAR_CUSTOM_ID = R.id.toolbar_custom;
+    private static final int TOOLBAR_DEFAULT_ID = R.id.toolbar;
 
     private ActivityConfig mConfig;
     private SystemBarTintManager mSystemBarManager;
     private List<UiController> mUiControllers;
     private ToolbarController mToolbarController;
-    private ToolbarController.CustomToolbar mCustomToolbar;
+    private ToolbarController.Handler mToolbarHandler;
 
     private BackKeyListener mBackKeyListener;
 
@@ -86,6 +92,7 @@ public abstract class BaseActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        MobclickAgent.onPageStart(getSimpleName());
 
         // handle ui controller resume
         if (mUiControllers != null && mUiControllers.size() > 0) {
@@ -98,6 +105,7 @@ public abstract class BaseActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
+        MobclickAgent.onPageEnd(getSimpleName());
 
         // handle ui controller pause
         if (mUiControllers != null && mUiControllers.size() > 0) {
@@ -118,6 +126,8 @@ public abstract class BaseActivity extends AppCompatActivity {
             mUiControllers.clear();
             mUiControllers = null;
         }
+        mToolbarController = null;
+        mToolbarHandler = null;
     }
 
     @Override
@@ -161,22 +171,20 @@ public abstract class BaseActivity extends AppCompatActivity {
                 if (!config.isCustomToolbar()) {
                     toolbarStub.setLayoutResource(config.isDarkToolbar() ? TOOLBAR_DARK_LAYOUT
                             : TOOLBAR_LIGHT_LAYOUT);
-
-                    View toolbarStubView = toolbarStub.inflate();
-                    setupToolbar((Toolbar) toolbarStubView);
                 } else {
                     toolbarStub.setLayoutResource(config.getCustomToolbarId() == 0 ?
                             TOOLBAR_CUSTOM_LAYOUT : config.getCustomToolbarId());
+                }
 
-                    View toolbarStubView = toolbarStub.inflate();
-                    if (mCustomToolbar != null) {
-                        mToolbarController = mCustomToolbar.setupCustomToolbar(toolbarStubView);
-                        mToolbarController.setBackButtonVisibility(config.isShowHomeAsUpKey() ?
-                                View.VISIBLE : View.GONE);
-                        registerUiController(mToolbarController);
-                    } else {
-                        Log.e(this, "No CustomToolbar controller set");
-                    }
+                View toolbarStubView = toolbarStub.inflate();
+                setupToolbar(toolbarStubView);
+            } else {
+                View toolbarView = ButterKnife.findById(this, config.isCustomToolbar() ?
+                        TOOLBAR_CUSTOM_ID : TOOLBAR_DEFAULT_ID);
+                if (toolbarView != null) {
+                    setupToolbar(toolbarView);
+                } else {
+                    Log.e(this, "No available toolbar exists");
                 }
             }
         } else {
@@ -198,8 +206,8 @@ public abstract class BaseActivity extends AppCompatActivity {
      * setup toolbar
      * build-in toolbar will not use a ToolbarController
      */
-    protected ToolbarController setupToolbar(@NonNull Toolbar toolbar) {
-        setSupportActionBar(toolbar);
+    protected ToolbarController setupToolbar(@NonNull View toolbarView) {
+        setSupportActionBar((Toolbar) toolbarView);
         // set toolbar function
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
@@ -331,6 +339,15 @@ public abstract class BaseActivity extends AppCompatActivity {
         transaction.commitAllowingStateLoss();
     }
 
+    @ColorInt
+    protected int getCompatColor(@ColorRes int resId) {
+        return ContextCompat.getColor(this, resId);
+    }
+
+    protected Drawable getCompatDrawable(@DrawableRes int resId) {
+        return ContextCompat.getDrawable(this, resId);
+    }
+
     protected Fragment getFragment(String tag) {
         return getSupportFragmentManager().findFragmentByTag(tag);
     }
@@ -343,6 +360,12 @@ public abstract class BaseActivity extends AppCompatActivity {
             mUiControllers = new ArrayList<>();
         }
         mUiControllers.add(controller);
+    }
+
+    protected void unregisterUiController(UiController uiController) {
+        if (mUiControllers != null && mUiControllers.size() > 0) {
+            mUiControllers.remove(uiController);
+        }
     }
 
     protected void hideToolBar() {
@@ -375,8 +398,20 @@ public abstract class BaseActivity extends AppCompatActivity {
         return mToolbarController;
     }
 
-    public void setCustomToolbarController(ToolbarController.CustomToolbar customToolbar) {
-        mCustomToolbar = customToolbar;
+    public void setToolbarController(ToolbarController toolbarController) {
+        if (mToolbarController != null) {
+            unregisterUiController(mToolbarController);
+        }
+        mToolbarController = toolbarController;
+        registerUiController(mToolbarController);
+    }
+
+    public ToolbarController.Handler getCustomToolbarHandler() {
+        return mToolbarHandler;
+    }
+
+    public void setCustomToolbarHandler(ToolbarController.Handler handler) {
+        mToolbarHandler = handler;
     }
 
     public void setBackKeyListener(BackKeyListener listener) {

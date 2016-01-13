@@ -1,12 +1,19 @@
 package com.xxxifan.devbox.library.ui;
 
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.support.annotation.ColorInt;
+import android.support.annotation.ColorRes;
+import android.support.annotation.DrawableRes;
 import android.support.annotation.LayoutRes;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.content.ContextCompat;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -92,9 +99,22 @@ public abstract class BaseFragment extends Fragment {
     @Override
     public void setUserVisibleHint(boolean isVisibleToUser) {
         super.setUserVisibleHint(isVisibleToUser);
+        Log.e("dd", "setUserVisibleHint " + getSimpleName());
         if (isVisibleToUser && !mIsDataLoaded && mLazyLoad) {
             setDataLoaded(onDataLoad());
         }
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        Log.e("dd", "onCreateOptionsMenu " + getSimpleName());
+    }
+
+    @Override
+    public void onHiddenChanged(boolean hidden) {
+        super.onHiddenChanged(hidden);
+        Log.e("dd", "onHiddenChanged " + hidden + " " + getSimpleName());
     }
 
     @Override
@@ -163,6 +183,15 @@ public abstract class BaseFragment extends Fragment {
         mTabTitle = title;
     }
 
+    @ColorInt
+    protected int getCompatColor(@ColorRes int resId) {
+        return ContextCompat.getColor(getContext(), resId);
+    }
+
+    protected Drawable getCompatDrawable(@DrawableRes int resId) {
+        return ContextCompat.getDrawable(getContext(), resId);
+    }
+
     /**
      * Hacky way to use fragment lifecycle to control dialog
      * You shouldn't use {@link #getLoadingDialog()} anymore
@@ -199,7 +228,7 @@ public abstract class BaseFragment extends Fragment {
     }
 
     /**
-     * @param detach         detach other fragments
+     * @param detach         detach other fragments, if is true, addToBackStack must be false.
      * @param addToBackStack add current fragment to back stack
      */
     public void checkoutFragment(Fragment fragment, boolean detach, boolean addToBackStack) {

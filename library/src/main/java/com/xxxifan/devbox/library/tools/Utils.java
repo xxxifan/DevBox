@@ -7,7 +7,7 @@ import android.content.res.Resources;
 import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
-import android.os.HandlerThread;
+import android.os.Looper;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
 import android.view.Display;
@@ -29,7 +29,7 @@ public class Utils {
     private static final String CONFIG_FORCE_NAVBAR = "dev_force_show_navbar";
     private static final String CONFIG_TOOLBAR_HEIGHT = "status_bar_height";
 
-    private static Handler mWorkerHandler;
+    private static Handler mUiHandler;
     private static boolean sHasTranslucentNavBar;
     private static int sStatusBarHeight;
     private static int sNavBarHeight;
@@ -163,26 +163,21 @@ public class Utils {
         }
     }
 
-    private static HandlerThread getWorkerThread() {
-        HandlerThread handlerThread = Devbox.getWorkerThread();
-        if (handlerThread.getState() == Thread.State.NEW) {
-            handlerThread.start();
-        }
-        return handlerThread;
-    }
-
+    /**
+     * run tasks on worker thread
+     */
     public static void postTask(Runnable runnable) {
-        if (mWorkerHandler == null) {
-            mWorkerHandler = new Handler(getWorkerThread().getLooper());
-        }
-        mWorkerHandler.post(runnable);
+        Devbox.getWorkerHandler().post(runnable);
     }
 
-    public static Handler getWorkerhandler() {
-        if (mWorkerHandler == null) {
-            mWorkerHandler = new Handler(getWorkerThread().getLooper());
+    /**
+     * run tasks on ui thread
+     */
+    public static void postUiTask(Runnable runnable) {
+        if (mUiHandler == null) {
+            mUiHandler = new Handler(Looper.getMainLooper());
         }
-        return mWorkerHandler;
+        mUiHandler.post(runnable);
     }
 
 }

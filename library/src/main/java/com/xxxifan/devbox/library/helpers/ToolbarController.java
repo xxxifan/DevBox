@@ -39,7 +39,7 @@ public abstract class ToolbarController extends UiController {
 
     public abstract void setBackButtonVisibility(int visibility);
 
-    public interface CustomToolbar{
-        ToolbarController setupCustomToolbar(View toolbarView);
+    public interface Handler {
+        ToolbarController getCustomController(View toolbarView);
     }
 }

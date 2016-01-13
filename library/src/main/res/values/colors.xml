@@ -13,4 +13,12 @@
     <color name="divider">#e0e0e0</color>
     <color name="stroke">#e5e5e5</color>
 
+    <color name="tag_color_0">#999999</color>
+    <color name="tag_color_1">#5BC7F8</color>
+    <color name="tag_color_2">#F7CC4A</color>
+    <color name="tag_color_3">#F1943E</color>
+    <color name="tag_color_4">#6BD965</color>
+    <color name="tag_color_5">#FD725B</color>
+
+
 </resources>

@@ -21,3 +21,8 @@
 -dontwarn okio.**
 
 -dontwarn android.support.**
+
+-dontwarn retrofit.**
+-keep class retrofit.** { *; }
+-keepattributes Signature
+-keepattributes Exceptions
