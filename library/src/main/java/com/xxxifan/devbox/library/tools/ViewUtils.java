@@ -1,11 +1,15 @@
 package com.xxxifan.devbox.library.tools;
 
+import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.graphics.Paint;
+import android.support.annotation.StringRes;
+import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.xxxifan.devbox.library.Devbox;
@@ -20,9 +24,12 @@ public class ViewUtils {
     protected ViewUtils() {
     }
 
-    public static int dp2px(int dp) {
-
+    public static int dp2px(float dp) {
         return (int) (dp * getDensity() + 0.5f);
+    }
+
+    public static float px2dp(int px) {
+        return px / getDensity() + 0.5f;
     }
 
     public static float getDensity() {
@@ -36,6 +43,14 @@ public class ViewUtils {
         return sDensity;
     }
 
+    public static void closeKeyboard(Context context) {
+        if (context != null) {
+            View focus = ((Activity) context).getCurrentFocus();
+            if (focus != null && focus instanceof EditText) {
+                closeKeyboard((EditText) focus);
+            }
+        }
+    }
 
     /**
      * @param editor one of EditText
@@ -81,5 +96,13 @@ public class ViewUtils {
         return new MaterialDialog.Builder(context)
                 .positiveText(android.R.string.ok)
                 .negativeText(android.R.string.cancel);
+    }
+
+    public static void showToast(@StringRes int resId, int duration) {
+        Toast.makeText(Devbox.getAppDelegate(), resId, duration).show();
+    }
+
+    public static void showToast(String toastStr, int duration) {
+        Toast.makeText(Devbox.getAppDelegate(), toastStr, duration).show();
     }
 }

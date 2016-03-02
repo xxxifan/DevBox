@@ -9,6 +9,9 @@ import java.io.InputStream;
 import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.Okio;
+import rx.Observable;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 
 /**
  * Created by xifan on 15-7-22.
@@ -72,5 +75,27 @@ public class IOUtils {
                 callback.done(null, e);
             }
         }
+    }
+
+    public static <T> Observable.Transformer<T, T> io() {
+        return new Observable.Transformer<T, T>() {
+            @Override
+            public Observable<T> call(Observable<T> observable) {
+                return observable
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread());
+            }
+        };
+    }
+
+    public static <T> Observable.Transformer<T, T> computation() {
+        return new Observable.Transformer<T, T>() {
+            @Override
+            public Observable<T> call(Observable<T> observable) {
+                return observable
+                        .subscribeOn(Schedulers.computation())
+                        .observeOn(AndroidSchedulers.mainThread());
+            }
+        };
     }
 }

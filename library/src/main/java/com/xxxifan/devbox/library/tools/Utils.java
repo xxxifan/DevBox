@@ -34,6 +34,7 @@ public class Utils {
     private static int sStatusBarHeight;
     private static int sNavBarHeight;
     private static int sScreenHeight;
+    private static int sScreenWidth;
 
     static {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
@@ -104,25 +105,34 @@ public class Utils {
 
     public static int getDeviceScreenHeight() {
         if (sScreenHeight == 0) {
-            Display display = ((WindowManager) Devbox.getAppDelegate().getSystemService(Context.WINDOW_SERVICE))
-                    .getDefaultDisplay();
-            DisplayMetrics metrics = new DisplayMetrics();
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                ((WindowManager) Devbox.getAppDelegate().getSystemService(Context.WINDOW_SERVICE))
-                        .getDefaultDisplay().getRealMetrics(metrics);
-                sScreenHeight = metrics.heightPixels;
-            } else {
-                try {
-                    Method method = display.getClass().getMethod("getRealMetrics", DisplayMetrics.class);
-                    method.invoke(display, metrics);
-                    sScreenHeight = metrics.heightPixels;
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+            sScreenHeight = getDisplayMetrics().heightPixels;
+        }
+        return sScreenHeight;
+    }
+
+    public static int getDeviceScreenWidth() {
+        if (sScreenWidth == 0) {
+            sScreenWidth = getDisplayMetrics().widthPixels;
+        }
+        return sScreenWidth;
+    }
+
+    private static DisplayMetrics getDisplayMetrics() {
+        Display display = ((WindowManager) Devbox.getAppDelegate().getSystemService(Context.WINDOW_SERVICE))
+                .getDefaultDisplay();
+        DisplayMetrics metrics = new DisplayMetrics();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            ((WindowManager) Devbox.getAppDelegate().getSystemService(Context.WINDOW_SERVICE))
+                    .getDefaultDisplay().getRealMetrics(metrics);
+        } else {
+            try {
+                Method method = display.getClass().getMethod("getRealMetrics", DisplayMetrics.class);
+                method.invoke(display, metrics);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
-
-        return sScreenHeight;
+        return metrics;
     }
 
     public static int getNavBarHeight() {
@@ -135,6 +145,10 @@ public class Utils {
             }
         }
         return sNavBarHeight;
+    }
+
+    public static int getWindowHeight() {
+        return getDeviceScreenHeight() - getSystemBarHeight() - getNavBarHeight();
     }
 
     /**
@@ -150,7 +164,7 @@ public class Utils {
             return getPackageInfo().versionCode;
         } catch (Exception e) {
             e.printStackTrace();
-            return Long.MAX_VALUE;
+            return 0;
         }
     }
 
@@ -161,6 +175,10 @@ public class Utils {
             e.printStackTrace();
             return "";
         }
+    }
+
+    public static void checkoutFragment() {
+
     }
 
     /**

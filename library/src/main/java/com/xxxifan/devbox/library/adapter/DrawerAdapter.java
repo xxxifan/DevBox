@@ -13,7 +13,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.xxxifan.devbox.library.R;
-import com.xxxifan.devbox.library.helpers.ActivityConfig;
+import com.xxxifan.devbox.library.ui.controller.ActivityConfig;
 
 import java.util.ArrayList;
 import java.util.List;

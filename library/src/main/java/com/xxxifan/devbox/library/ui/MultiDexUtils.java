@@ -135,7 +135,7 @@ public class MultiDexUtils {
      * @throws PackageManager.NameNotFoundException
      * @throws IOException
      */
-    public List<String> getSourcePaths(Context context) throws PackageManager.NameNotFoundException, IOException {
+    private static List<String> getSourcePaths(Context context) throws PackageManager.NameNotFoundException, IOException {
         final ApplicationInfo applicationInfo = context.getPackageManager().getApplicationInfo(context.getPackageName(), 0);
         final File sourceApk = new File(applicationInfo.sourceDir);
         final File dexDir = new File(applicationInfo.dataDir, SECONDARY_FOLDER_NAME);
@@ -172,7 +172,7 @@ public class MultiDexUtils {
      * @throws PackageManager.NameNotFoundException
      * @throws IOException
      */
-    public List<String> getExternalDexClasses(Context context) throws PackageManager.NameNotFoundException, IOException {
+    public static List<String> getExternalDexClasses(Context context) throws PackageManager.NameNotFoundException, IOException {
         final List<String> paths = getSourcePaths(context);
         if (paths.size() <= 1) {
             // no external dex
@@ -208,7 +208,7 @@ public class MultiDexUtils {
      * @param context
      * @return get all loaded external classes
      */
-    public List<String> getLoadedExternalDexClasses(Context context) {
+    public static List<String> getLoadedExternalDexClasses(Context context) {
         try {
             final List<String> externalDexClasses = getExternalDexClasses(context);
             if (externalDexClasses != null && !externalDexClasses.isEmpty()) {

@@ -8,4 +8,5 @@
 
     <string name="btn_download">Download</string>
     <string name="btn_ignore">Ignore</string>
+    <string name="msg_no_data">暂无数据</string>
 </resources>

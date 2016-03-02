@@ -6,7 +6,7 @@ import android.widget.Toast;
 import com.squareup.okhttp.Callback;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
-import com.xxxifan.devbox.library.Devbox;
+import com.xxxifan.devbox.library.tools.ViewUtils;
 
 import java.io.IOException;
 
@@ -51,7 +51,7 @@ public abstract class HttpCallback<T> implements Callback {
      */
     public void done(T result, IOException e) {
         if (e != null) {
-            Toast.makeText(Devbox.getAppDelegate(), e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
+            ViewUtils.showToast(e.getLocalizedMessage(), Toast.LENGTH_SHORT);
         }
     }
 }

@@ -1,22 +1,22 @@
-package com.xxxifan.devbox.library.ui;
+package com.xxxifan.devbox.library.ui.controller;
 
 import android.content.Context;
 import android.view.View;
 
-/**
- * Created by xifan on 15-12-28.
- * Fragment version of UiController.
- */
-public abstract class ChildUiController {
-    private View mView;
-    private BaseFragment mFragment;
+import com.xxxifan.devbox.library.ui.BaseActivity;
 
-    public ChildUiController(BaseFragment fragment, View view) {
+/**
+ * Created by xifan on 15-7-22.
+ * UiController, support a set of default life circle control. Use {@link BaseActivity#registerUiControllers(UiController...)} to control.
+ */
+public abstract class UiController {
+    private View mView;
+
+    public UiController(View view) {
         if (view == null) {
             throw new IllegalArgumentException("view cannot be null");
         }
         mView = view;
-        mFragment = fragment;
         initView(view);
     }
 
@@ -32,15 +32,15 @@ public abstract class ChildUiController {
 
     public void onDestroy() {
         mView = null;
-        mFragment = null;
     }
+
 
     protected Context getContext() {
         return mView == null ? null : mView.getContext();
     }
 
-    protected BaseFragment getFragment() {
-        return mFragment;
+    protected BaseActivity getActivity() {
+        return getContext() == null ? null : (BaseActivity) getContext();
     }
 
     protected abstract void initView(View view);

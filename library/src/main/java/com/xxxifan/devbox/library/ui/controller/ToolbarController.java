@@ -1,10 +1,9 @@
-package com.xxxifan.devbox.library.helpers;
+package com.xxxifan.devbox.library.ui.controller;
 
 import android.graphics.drawable.Drawable;
 import android.support.annotation.ColorInt;
 import android.view.View;
-
-import com.xxxifan.devbox.library.ui.UiController;
+import android.widget.TextView;
 
 /**
  * Created by xifan on 15-11-24.
@@ -20,8 +19,6 @@ public abstract class ToolbarController extends UiController {
     }
 
     public abstract void setTitleText(CharSequence title);
-
-    public abstract void setTitleView(View titleView);
 
     public abstract void setTitleColor(@ColorInt int color);
 
@@ -39,7 +36,17 @@ public abstract class ToolbarController extends UiController {
 
     public abstract void setBackButtonVisibility(int visibility);
 
+    public abstract View getLeftView();
+
+    public abstract View getCenterView();
+
+    public abstract TextView getTitleView();
+
+    public abstract void setTitleView(View titleView);
+
+    public abstract View getRightView();
+
     public interface Handler {
-        ToolbarController getCustomController(View toolbarView);
+        ToolbarController getController(View toolbarView);
     }
 }

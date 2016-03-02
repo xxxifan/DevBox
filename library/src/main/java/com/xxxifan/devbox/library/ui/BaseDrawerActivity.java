@@ -12,8 +12,8 @@ import android.widget.ListView;
 
 import com.xxxifan.devbox.library.R;
 import com.xxxifan.devbox.library.adapter.DrawerAdapter;
-import com.xxxifan.devbox.library.helpers.ActivityConfig;
 import com.xxxifan.devbox.library.tools.Log;
+import com.xxxifan.devbox.library.ui.controller.ActivityConfig;
 
 import butterknife.ButterKnife;
 

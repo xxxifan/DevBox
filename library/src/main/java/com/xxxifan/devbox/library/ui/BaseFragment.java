@@ -1,5 +1,6 @@
 package com.xxxifan.devbox.library.ui;
 
+import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.annotation.ColorInt;
@@ -12,41 +13,61 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.afollestad.materialdialogs.MaterialDialog;
+import com.trello.rxlifecycle.FragmentEvent;
+import com.trello.rxlifecycle.FragmentLifecycleProvider;
+import com.trello.rxlifecycle.RxLifecycle;
 import com.umeng.analytics.MobclickAgent;
 import com.xxxifan.devbox.library.Devbox;
+import com.xxxifan.devbox.library.callbacks.SimpleSubscriber;
 import com.xxxifan.devbox.library.entity.CustomEvent;
-import com.xxxifan.devbox.library.helpers.ActivityConfig;
 import com.xxxifan.devbox.library.tools.Log;
 import com.xxxifan.devbox.library.tools.ViewUtils;
+import com.xxxifan.devbox.library.ui.controller.ActivityConfig;
+import com.xxxifan.devbox.library.ui.controller.ChildUiController;
+import com.xxxifan.devbox.library.ui.controller.DataLoadManager;
+import com.xxxifan.devbox.library.ui.controller.ToolbarController;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import de.greenrobot.event.EventBus;
+import rx.Observable;
+import rx.Subscriber;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Action0;
+import rx.schedulers.Schedulers;
+import rx.subjects.BehaviorSubject;
 
 /**
  * Created by Bob Peng on 2015/5/7.
  */
-public abstract class BaseFragment extends Fragment {
+public abstract class BaseFragment extends Fragment implements FragmentLifecycleProvider {
+
+    private final BehaviorSubject<FragmentEvent> lifecycleSubject = BehaviorSubject.create();
 
     private MaterialDialog mLoadingDialog;
     private LayoutInflater mInflater;
     private List<ChildUiController> mUiControllers;
+    private DataLoadManager mDataLoadManager;
+    private Observable<Object> mToolbarSetupObserver;
 
-    private boolean mIsDataLoaded = false;
-    private boolean mLazyLoad = false;
     private int mLayoutId;
     private String mTabTitle;
 
     @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        lifecycleSubject.onNext(FragmentEvent.ATTACH);
+    }
+
+    @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        lifecycleSubject.onNext(FragmentEvent.CREATE);
         setHasOptionsMenu(true);
 
         Bundle data = getArguments();
@@ -67,8 +88,24 @@ public abstract class BaseFragment extends Fragment {
     }
 
     @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        lifecycleSubject.onNext(FragmentEvent.CREATE_VIEW);
+        if (mToolbarSetupObserver != null) {
+            mToolbarSetupObserver.subscribe(new SimpleSubscriber<>());
+        }
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        lifecycleSubject.onNext(FragmentEvent.START);
+    }
+
+    @Override
     public void onResume() {
         super.onResume();
+        lifecycleSubject.onNext(FragmentEvent.RESUME);
         MobclickAgent.onPageStart(getSimpleName());
 
         // handle ui controller resume
@@ -78,13 +115,12 @@ public abstract class BaseFragment extends Fragment {
             }
         }
 
-        if (!mIsDataLoaded && !mLazyLoad) {
-            setDataLoaded(onDataLoad());
-        }
+        getDataLoadManager().onDataLoad();
     }
 
     @Override
     public void onPause() {
+        lifecycleSubject.onNext(FragmentEvent.PAUSE);
         super.onPause();
         MobclickAgent.onPageEnd(getSimpleName());
 
@@ -97,28 +133,14 @@ public abstract class BaseFragment extends Fragment {
     }
 
     @Override
-    public void setUserVisibleHint(boolean isVisibleToUser) {
-        super.setUserVisibleHint(isVisibleToUser);
-        Log.e("dd", "setUserVisibleHint " + getSimpleName());
-        if (isVisibleToUser && !mIsDataLoaded && mLazyLoad) {
-            setDataLoaded(onDataLoad());
-        }
-    }
-
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        super.onCreateOptionsMenu(menu, inflater);
-        Log.e("dd", "onCreateOptionsMenu " + getSimpleName());
-    }
-
-    @Override
-    public void onHiddenChanged(boolean hidden) {
-        super.onHiddenChanged(hidden);
-        Log.e("dd", "onHiddenChanged " + hidden + " " + getSimpleName());
+    public void onStop() {
+        lifecycleSubject.onNext(FragmentEvent.STOP);
+        super.onStop();
     }
 
     @Override
     public void onDestroyView() {
+        lifecycleSubject.onNext(FragmentEvent.DESTROY_VIEW);
         super.onDestroyView();
         dismissDialog();
 
@@ -129,6 +151,35 @@ public abstract class BaseFragment extends Fragment {
             }
             mUiControllers.clear();
             mUiControllers = null;
+        }
+
+        DataLoadManager.destroy(mDataLoadManager);
+    }
+
+    @Override
+    public void onDestroy() {
+        lifecycleSubject.onNext(FragmentEvent.DESTROY);
+        super.onDestroy();
+    }
+
+    @Override
+    public void onDetach() {
+        lifecycleSubject.onNext(FragmentEvent.DETACH);
+        super.onDetach();
+    }
+
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+        onVisible(isVisibleToUser);
+
+        if (isVisibleToUser) {
+            mToolbarSetupObserver = getToolbarObserver();
+            if (getActivity() != null) {
+                mToolbarSetupObserver.subscribe(new SimpleSubscriber<>());
+            }
+
+            getDataLoadManager().onLazyDataLoad();
         }
     }
 
@@ -142,37 +193,21 @@ public abstract class BaseFragment extends Fragment {
 
     /**
      * for pager fragments, better to load data when user visible, that's time to setLazyDataLoad to
-     * true.
-     * called before onResume().
+     * true. And this will only works to paper fragments.
+     * Will be called before onResume().
      *
      * @param lazyLoad set to false to call onDataLoad() in onResume(), or later in setMenuVisibility().
      */
     protected void setLazyDataLoad(boolean lazyLoad) {
-        mLazyLoad = lazyLoad;
-    }
-
-    /**
-     * a good point to load data, called on setUserVisibleHint() at first time and later on onResume().
-     *
-     * @return whether data load successful.
-     */
-    protected boolean onDataLoad() {
-        return false;
+        getDataLoadManager().enableLazyLoad();
     }
 
     /**
      * notify data loaded and set status to loaded
      */
-    protected void notifyDataLoaded() {
-        setDataLoaded(true);
-    }
-
-    protected boolean isDataLoaded() {
-        return mIsDataLoaded;
-    }
-
-    protected void setDataLoaded(boolean value) {
-        mIsDataLoaded = value;
+    public void notifyDataLoaded() {
+        getDataLoadManager().setDataLoaded(true);
+        getDataLoadManager().notifyPageLoaded();
     }
 
     public String getTabTitle() {
@@ -253,6 +288,7 @@ public abstract class BaseFragment extends Fragment {
             for (Fragment oldFragment : fragmentList) {
                 if (oldFragment != null && oldFragment.isVisible()) {
                     transaction.hide(oldFragment);
+                    oldFragment.setUserVisibleHint(false);
                     if (detach) {
                         transaction.detach(oldFragment);
                     }
@@ -274,6 +310,24 @@ public abstract class BaseFragment extends Fragment {
         }
         transaction.show(fragment);
         transaction.commitAllowingStateLoss();
+
+        fragment.setUserVisibleHint(true);
+    }
+
+    /**
+     * setup custom toolbar while fragment shown.
+     */
+    protected void onSetupToolbar(ToolbarController toolbarController) {
+        boolean visible = getBaseActivity().getConfig().isShowHomeAsUpKey();
+        toolbarController.setBackButtonVisibility(visible ? View.VISIBLE : View.GONE);
+    }
+
+    public BaseActivity getBaseActivity() {
+        return (BaseActivity) getActivity();
+    }
+
+    public BaseFragment getBaseFragment() {
+        return this;
     }
 
     protected void postEvent(CustomEvent event, Class target) {
@@ -306,6 +360,94 @@ public abstract class BaseFragment extends Fragment {
         return mInflater;
     }
 
+    protected void registerLoadManager(DataLoadManager manager) {
+        mDataLoadManager = manager;
+    }
+
+    protected DataLoadManager getDataLoadManager() {
+        if (mDataLoadManager == null) {
+            mDataLoadManager = new DataLoadManager();
+        }
+        return mDataLoadManager;
+    }
+
+    protected <T> Observable.Transformer<T, T> io() {
+        return new Observable.Transformer<T, T>() {
+            @Override
+            public Observable<T> call(Observable<T> observable) {
+                return observable
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread());
+            }
+        };
+    }
+
+    protected <T> Observable.Transformer<T, T> computation() {
+        return new Observable.Transformer<T, T>() {
+            @Override
+            public Observable<T> call(Observable<T> observable) {
+                return observable
+                        .subscribeOn(Schedulers.computation())
+                        .observeOn(AndroidSchedulers.mainThread());
+            }
+        };
+    }
+
+    @Override
+    public final Observable<FragmentEvent> lifecycle() {
+        return lifecycleSubject.asObservable();
+    }
+
+    @Override
+    public final <T> Observable.Transformer<T, T> bindUntilEvent(FragmentEvent event) {
+        return RxLifecycle.bindUntilFragmentEvent(lifecycleSubject, event);
+    }
+
+    @Override
+    public final <T> Observable.Transformer<T, T> bindToLifecycle() {
+        return RxLifecycle.bindFragment(lifecycleSubject);
+    }
+
+    /**
+     * a Observable to execute {@link #onSetupToolbar(ToolbarController)},
+     * if this observable exists until onResume, then subscribe it.
+     */
+    private Observable<Object> getToolbarObserver() {
+        return Observable
+                .create(new Observable.OnSubscribe<Object>() {
+                    @Override
+                    public void call(Subscriber<? super Object> subscriber) {
+                        try {
+                            ToolbarController toolbarController = getBaseActivity().getToolbarController();
+                            if (toolbarController != null) {
+                                onSetupToolbar(toolbarController);
+                            }
+                            if (!subscriber.isUnsubscribed()) {
+                                subscriber.onCompleted();
+                            }
+                        } catch (Exception e) {
+                            if (!subscriber.isUnsubscribed()) {
+                                subscriber.onError(e);
+                            }
+                        }
+                    }
+                })
+                .doOnTerminate(new Action0() {
+                    @Override
+                    public void call() {
+                        mToolbarSetupObserver = null;
+                    }
+                });
+    }
+
+    /**
+     * called when {@link #setUserVisibleHint(boolean)}
+     * now it will be triggered when checkout fragments, so better to handle events that happens to
+     * switch fragments.
+     */
+    protected void onVisible(boolean visible) {
+    }
+
     @LayoutRes
     protected abstract int getLayoutId();
 
@@ -314,6 +456,6 @@ public abstract class BaseFragment extends Fragment {
     /**
      * @return human readable class name for tracking.
      */
-    protected abstract String getSimpleName();
+    public abstract String getSimpleName();
 
 }

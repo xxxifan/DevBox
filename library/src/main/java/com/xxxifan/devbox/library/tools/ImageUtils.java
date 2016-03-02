@@ -3,8 +3,6 @@ package com.xxxifan.devbox.library.tools;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
-import com.xxxifan.devbox.library.callbacks.http.ImageDownloadCallback;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -13,10 +11,6 @@ import java.io.IOException;
  * Created by xifan on 15-12-23.
  */
 public class ImageUtils {
-
-    public static void loadBitmap(ImageDownloadCallback callback) {
-        callback.onLoadImage();
-    }
 
     public static BitmapFactory.Options getSampleSizeOptions(String path, int reqWidth, int reqHeight) {
         BitmapFactory.Options options = new BitmapFactory.Options();
@@ -70,5 +64,10 @@ public class ImageUtils {
             }
         }
         return null;
+    }
+
+    public static Bitmap getSampleSizeBitmap(String path, int width, int height) {
+        BitmapFactory.Options options = ImageUtils.getSampleSizeOptions(path, width, height);
+        return  BitmapFactory.decodeFile(path, options);
     }
 }

@@ -20,7 +20,7 @@ public class AppPref {
         return Devbox.getAppDelegate().getSharedPreferences(name, Context.MODE_PRIVATE);
     }
 
-    public static SharedPreferences.Editor getEditor() {
+    public static SharedPreferences.Editor edit() {
         return getPrefs().edit();
     }
 

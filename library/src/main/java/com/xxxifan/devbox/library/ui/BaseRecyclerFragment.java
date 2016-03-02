@@ -1,19 +1,24 @@
 package com.xxxifan.devbox.library.ui;
 
-import android.support.v4.widget.SwipeRefreshLayout;
+import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewStub;
 
 import com.xxxifan.devbox.library.R;
-import com.xxxifan.devbox.library.helpers.RecyclerConfig;
+import com.xxxifan.devbox.library.helpers.PullRefreshHandler;
+import com.xxxifan.devbox.library.ui.controller.DataLoadManager;
+import com.xxxifan.devbox.library.ui.controller.RecyclerConfig;
+
+import butterknife.ButterKnife;
 
 
 /**
  * Created by Bob Peng on 2015/5/12.
  */
-public abstract class BaseRecyclerFragment extends BaseFragment {
+public abstract class BaseRecyclerFragment extends BaseFragment implements DataLoadManager.ListLoadCallbacks, PullRefreshHandler.PullLayoutCallback {
 
     public static final int VIEW_TYPE_HEADER = 1;
     public static final int VIEW_TYPE_ITEM = 0;
@@ -25,16 +30,13 @@ public abstract class BaseRecyclerFragment extends BaseFragment {
     protected static final int REQUEST_LOAD_MORE = 1;
     protected static final int REQUEST_REFRESH = 0;
 
-
     private RecyclerView mRecyclerView;
     private RecyclerView.Adapter mAdapter;
-    private SwipeRefreshLayout mRefreshLayout;
+    private ViewStub mEmptyStub;
+    private View mEmptyView;
+    private PullRefreshHandler mRefreshHandler;
 
     private RecyclerConfig mConfig;
-
-    private int mLastId = REQUEST_NO_ID;
-    private boolean mIsDataEnd;
-    private boolean mPostRefresh;
 
     protected RecyclerConfig getConfig() {
         if (mConfig == null) {
@@ -44,41 +46,42 @@ public abstract class BaseRecyclerFragment extends BaseFragment {
     }
 
     @Override
+    public void onCreate(Bundle savedInstanceState) {
+        onConfigureFragment(getConfig());
+        super.onCreate(savedInstanceState);
+    }
+
+    protected void onConfigureFragment(RecyclerConfig config) {
+
+    }
+
+    @Override
     protected int getLayoutId() {
         return getConfig().getLayoutResId();
     }
 
     @Override
     protected void initView(View rootView) {
+        registerLoadManager(DataLoadManager.getListDataLoader(this));
         // setup recycler view
-        View childView = rootView.findViewById(R.id.fragment_recycler_view);
-        if (childView == null) {
+        View childView = ButterKnife.findById(rootView, R.id.fragment_recycler_view);
+        if (childView != null) {
+            mRecyclerView = (RecyclerView) childView;
+            setupRecyclerView(mRecyclerView);
+        } else {
             throw new IllegalStateException("RecyclerView not found");
         }
-        setupRecyclerView(mRecyclerView = (RecyclerView) childView);
 
         // setup refresh layout
         View layoutView = rootView.findViewById(R.id.fragment_recycler_swipe_layout);
         if (layoutView != null) {
-            mRefreshLayout = (SwipeRefreshLayout) layoutView;
-            mRefreshLayout.setColorSchemeColors(getResources().getColor(R.color.colorPrimary));
-            mRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-                @Override
-                public void onRefresh() {
-                    mLastId = getTopPagerId();
-                    onDataRefresh(REQUEST_REFRESH);
-                }
-            });
-            if (mPostRefresh) {
-                mPostRefresh = false;
-                mRefreshLayout.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        mRefreshLayout.setRefreshing(true);
-                    }
-                });
-            }
+            mRefreshHandler = new PullRefreshHandler(this, layoutView);
+            mRefreshHandler.setPullLayout(this);
+
+            registerUiController(mRefreshHandler);
         }
+
+        mEmptyStub = ButterKnife.findById(rootView, R.id.recycler_empty_view);
     }
 
     protected void setupRecyclerView(RecyclerView recyclerView) {
@@ -93,24 +96,13 @@ public abstract class BaseRecyclerFragment extends BaseFragment {
         recyclerView.setAdapter(mAdapter);
     }
 
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        if (mRefreshLayout != null) {
-            mRefreshLayout.setOnRefreshListener(null);
-            mRefreshLayout = null;
-        }
-        if (mRecyclerView != null) {
-            mRecyclerView.setLayoutManager(null);
-        }
-    }
-
     /**
-     * Now this method will be called automatically
+     * No need to override or call this method when you extended from BaseRecyclerFragment
+     * you can simply override its return value to control isDataLoaded() status
      */
     @Override
-    protected boolean onDataLoad() {
-        startRefresh(REQUEST_LOAD_MORE);
+    public boolean onDataLoad() {
+        startRefresh();
         return false;
     }
 
@@ -118,75 +110,96 @@ public abstract class BaseRecyclerFragment extends BaseFragment {
      * start refresh animation and run as load more type.
      */
     protected void startRefresh() {
-        startRefresh(REQUEST_LOAD_MORE);
+        startRefresh(REQUEST_REFRESH);
     }
 
     protected void startRefresh(int loadType) {
-        if (mRefreshLayout == null) {
-            mPostRefresh = true;
-        } else {
-            mRefreshLayout.setRefreshing(true);
+        if (loadType == REQUEST_REFRESH) {
+            getDataLoadManager().resetPage();
+            if (mRefreshHandler != null) {
+                mRefreshHandler.postRefresh(true);
+            }
         }
         onDataRefresh(loadType);
     }
 
     protected void stopRefresh() {
-        if (mRefreshLayout != null) {
-            mRefreshLayout.setRefreshing(false);
+        if (mRefreshHandler != null) {
+            mRefreshHandler.setRefresh(false);
         }
     }
 
     @Override
-    protected void notifyDataLoaded() {
+    public void notifyDataLoaded() {
         super.notifyDataLoaded();
         try {
-            mAdapter.notifyDataSetChanged();
+            if (mAdapter != null) {
+                mAdapter.notifyDataSetChanged();
+            }
         } catch (IllegalStateException ignore) {
         }
 
-        if (mRefreshLayout != null && mRefreshLayout.isRefreshing()) {
+        if (mRefreshHandler != null && mRefreshHandler.isRefreshing()) {
             stopRefresh();
         }
     }
 
-    protected void setIsDataEnd(boolean isEnd) {
-        mIsDataEnd = isEnd;
+    public void setEmptyView(int layoutRes) {
+        if (mEmptyStub != null) {
+            mEmptyStub.setLayoutResource(layoutRes);
+        } else if (getRecyclerView() != null) {
+            mEmptyView = View.inflate(getContext(), layoutRes, (ViewGroup) getRecyclerView().getParent());
+            mEmptyView.setVisibility(View.GONE);
+        }
+    }
+
+    public void showEmptyView() {
+        if (mEmptyView == null) {
+            if (mEmptyStub == null) {
+                return;
+            }
+            mEmptyView = mEmptyStub.inflate();
+        }
+
+        mEmptyView.setVisibility(View.VISIBLE);
+    }
+
+    public void hideEmptyView() {
+        if (mEmptyView != null) {
+            mEmptyView.setVisibility(View.GONE);
+        }
     }
 
     protected boolean isDataEnd() {
-        return mIsDataEnd;
+        return getDataLoadManager().isDataEnd();
+    }
+
+    /**
+     * should call this method if data is loaded successfully but none data returned, which means
+     * no more data present.
+     */
+    protected void setDataEnd(boolean isEnd) {
+        getDataLoadManager().setDataEnd(isEnd);
+    }
+
+    protected boolean isDataLoaded() {
+        return getDataLoadManager().isDataLoaded();
     }
 
     protected void onScrolledToEnd() {
-        mLastId = getNextPagerId();
         startRefresh(REQUEST_LOAD_MORE);
     }
 
-    protected int getNextPagerId() {
-        return REQUEST_NO_ID;
-    }
-
-    protected int getTopPagerId() {
-        return REQUEST_NO_ID;
+    protected int getPage() {
+        return getDataLoadManager().getPage();
     }
 
     protected int getExtraItemSize() {
         return 0;
     }
 
-    /**
-     * @return lastId, decided by load type, could be result of getNextPagerId() or getTopPagerId()
-     */
-    protected int getLastId() {
-        return mLastId;
-    }
-
     protected RecyclerView getRecyclerView() {
         return mRecyclerView;
-    }
-
-    protected SwipeRefreshLayout getRefreshLayout() {
-        return mRefreshLayout;
     }
 
     protected RecyclerView.Adapter getAdapter() {
@@ -197,13 +210,9 @@ public abstract class BaseRecyclerFragment extends BaseFragment {
         mAdapter = adapter;
     }
 
-    /**
-     * called when a good time to load data.
-     * SwipeRefreshLayout will call this method too.
-     *
-     * @param loadType choose to append result to current list or replace list.
-     */
-    protected abstract void onDataRefresh(int loadType);
+    protected PullRefreshHandler getRefreshHandler() {
+        return mRefreshHandler;
+    }
 
     /**
      * Delegate method to generate view holder.

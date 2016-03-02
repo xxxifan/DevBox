@@ -1,4 +1,4 @@
-package com.xxxifan.devbox.library.helpers;
+package com.xxxifan.devbox.library.ui.controller;
 
 import android.os.Build;
 import android.support.annotation.ColorInt;
@@ -42,6 +42,7 @@ public class ActivityConfig {
     private boolean mShowHomeAsUpKey;
     private boolean mIsFitSystemWindow;
     private boolean mIsDrawerLayout;
+    private boolean mToolbarTransparent;
 
     private ActivityConfig(BaseActivity activity) {
         mActivityRef = new WeakReference<>(activity);
@@ -155,6 +156,21 @@ public class ActivityConfig {
             Log.e(this, "Activity is null! translucent navbar is not set");
         }
         return this;
+    }
+
+    /**
+     * make toolbar and status bar full transparent and no padding
+     */
+    public ActivityConfig setToolbarTransparent(boolean transparent) {
+        mToolbarTransparent = transparent;
+        setToolbarColor(mActivityRef.get().getCompatColor(R.color.transparent));
+        setTranslucentStatusBar(transparent);
+        setFitSystemWindow(false);
+        return this;
+    }
+
+    public boolean isToolbarTransparent() {
+        return mToolbarTransparent;
     }
 
     public boolean isFitSystemWindow() {

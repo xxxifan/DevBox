@@ -2,6 +2,8 @@ package com.xxxifan.devbox.library.tools;
 
 import android.app.DownloadManager;
 import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Environment;
 import android.widget.Toast;
@@ -21,6 +23,7 @@ import com.xxxifan.devbox.library.entity.BaseEntity;
 import com.xxxifan.devbox.library.receivers.DownloadReceiver;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.HashMap;
@@ -45,7 +48,12 @@ public class HttpUtils {
     public static OkHttpClient getHttpClient() {
         if (sHttpClient == null) {
             sHttpClient = new OkHttpClient();
-            Cache cache = new Cache(Utils.getCacheDir(), 100 * 1024 * 1024);
+            Cache cache = null;
+            try {
+                cache = new Cache(Utils.getCacheDir(), 100 * 1024 * 1024);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             sHttpClient.setCache(cache);
             sHttpClient.setConnectTimeout(15, TimeUnit.SECONDS);
             sHttpClient.setReadTimeout(20, TimeUnit.SECONDS);
@@ -167,6 +175,18 @@ public class HttpUtils {
     }
 
     public static void onAvosException(String e) {
-        Toast.makeText(Devbox.getAppDelegate(), e, Toast.LENGTH_SHORT).show();
+        ViewUtils.showToast(e, Toast.LENGTH_SHORT);
+    }
+
+    public static boolean hasNetwork() {
+        if (Devbox.getAppDelegate() != null) {
+            ConnectivityManager mConnectivityManager = (ConnectivityManager) Devbox.getAppDelegate()
+                    .getSystemService(Context.CONNECTIVITY_SERVICE);
+            NetworkInfo mNetworkInfo = mConnectivityManager.getActiveNetworkInfo();
+            if (mNetworkInfo != null) {
+                return mNetworkInfo.isAvailable();
+            }
+        }
+        return false;
     }
 }

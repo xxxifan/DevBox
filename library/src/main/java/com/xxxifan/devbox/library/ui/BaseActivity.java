@@ -19,28 +19,37 @@ import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.ViewStub;
 import android.widget.FrameLayout;
 
+import com.trello.rxlifecycle.ActivityEvent;
+import com.trello.rxlifecycle.ActivityLifecycleProvider;
+import com.trello.rxlifecycle.RxLifecycle;
 import com.umeng.analytics.MobclickAgent;
 import com.xxxifan.devbox.library.Devbox;
 import com.xxxifan.devbox.library.R;
 import com.xxxifan.devbox.library.entity.CustomEvent;
-import com.xxxifan.devbox.library.helpers.ActivityConfig;
 import com.xxxifan.devbox.library.helpers.SystemBarTintManager;
-import com.xxxifan.devbox.library.helpers.ToolbarController;
+import com.xxxifan.devbox.library.tools.IOUtils;
 import com.xxxifan.devbox.library.tools.Log;
+import com.xxxifan.devbox.library.tools.Utils;
+import com.xxxifan.devbox.library.ui.controller.ActivityConfig;
+import com.xxxifan.devbox.library.ui.controller.ToolbarController;
+import com.xxxifan.devbox.library.ui.controller.UiController;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.ButterKnife;
 import de.greenrobot.event.EventBus;
+import rx.Observable;
+import rx.subjects.BehaviorSubject;
 
 /**
  * Created by Administrator on 2015/5/6.
  */
-public abstract class BaseActivity extends AppCompatActivity {
+public abstract class BaseActivity extends AppCompatActivity implements ActivityLifecycleProvider {
 
     private static final int BASE_CONTAINER_ID = R.id.base_container;
     private static final int TOOLBAR_STUB_ID = R.id.toolbar_stub;
@@ -50,11 +59,14 @@ public abstract class BaseActivity extends AppCompatActivity {
     private static final int TOOLBAR_CUSTOM_ID = R.id.toolbar_custom;
     private static final int TOOLBAR_DEFAULT_ID = R.id.toolbar;
 
+    private final BehaviorSubject<ActivityEvent> lifecycleSubject = BehaviorSubject.create();
+
     private ActivityConfig mConfig;
     private SystemBarTintManager mSystemBarManager;
     private List<UiController> mUiControllers;
     private ToolbarController mToolbarController;
     private ToolbarController.Handler mToolbarHandler;
+    private BaseFragment mCurrentFragment;
 
     private BackKeyListener mBackKeyListener;
 
@@ -72,6 +84,7 @@ public abstract class BaseActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         onConfigureActivity(getConfig());
         super.onCreate(savedInstanceState);
+        lifecycleSubject.onNext(ActivityEvent.CREATE);
         setContentView(getLayoutId());
 
         // handle fragments
@@ -90,8 +103,15 @@ public abstract class BaseActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        lifecycleSubject.onNext(ActivityEvent.START);
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
+        lifecycleSubject.onNext(ActivityEvent.RESUME);
         MobclickAgent.onPageStart(getSimpleName());
 
         // handle ui controller resume
@@ -104,6 +124,7 @@ public abstract class BaseActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
+        lifecycleSubject.onNext(ActivityEvent.PAUSE);
         super.onPause();
         MobclickAgent.onPageEnd(getSimpleName());
 
@@ -116,7 +137,14 @@ public abstract class BaseActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onStop() {
+        lifecycleSubject.onNext(ActivityEvent.STOP);
+        super.onStop();
+    }
+
+    @Override
     protected void onDestroy() {
+        lifecycleSubject.onNext(ActivityEvent.DESTROY);
         super.onDestroy();
         // unregister ui controllers
         if (mUiControllers != null && mUiControllers.size() > 0) {
@@ -161,7 +189,9 @@ public abstract class BaseActivity extends AppCompatActivity {
             if (layoutResID > 0) {
                 View view = getLayoutInflater().inflate(layoutResID, null, false);
                 FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(-1, -1);
-                params.topMargin = getResources().getDimensionPixelSize(R.dimen.toolbar_height);
+                if (!config.isToolbarTransparent()) {
+                    params.topMargin = getResources().getDimensionPixelSize(R.dimen.toolbar_height);
+                }
                 ((FrameLayout) containerView).addView(view, 0, params);
             }
 
@@ -177,15 +207,30 @@ public abstract class BaseActivity extends AppCompatActivity {
                 }
 
                 View toolbarStubView = toolbarStub.inflate();
+                if (config.isToolbarTransparent()) {
+                    ((ViewGroup.MarginLayoutParams) toolbarStubView.getLayoutParams()).topMargin = Utils.getSystemBarHeight();
+                }
                 setupToolbar(toolbarStubView);
             } else {
                 View toolbarView = ButterKnife.findById(this, config.isCustomToolbar() ?
                         TOOLBAR_CUSTOM_ID : TOOLBAR_DEFAULT_ID);
                 if (toolbarView != null) {
+                    if (config.isToolbarTransparent()) {
+                        ((ViewGroup.MarginLayoutParams) toolbarView.getLayoutParams()).topMargin = Utils.getSystemBarHeight();
+                    }
                     setupToolbar(toolbarView);
                 } else {
                     Log.e(this, "No available toolbar exists");
                 }
+            }
+
+            // set compat status color in kitkat or later devices
+            if (config.isFitSystemWindow() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                if (mSystemBarManager == null) {
+                    mSystemBarManager = new SystemBarTintManager(this);
+                }
+                mSystemBarManager.setStatusBarTintEnabled(true);
+                mSystemBarManager.setTintColor(config.getToolbarColor());
             }
         } else {
             if (layoutResID > 0) {
@@ -207,23 +252,14 @@ public abstract class BaseActivity extends AppCompatActivity {
      * build-in toolbar will not use a ToolbarController
      */
     protected ToolbarController setupToolbar(@NonNull View toolbarView) {
-        setSupportActionBar((Toolbar) toolbarView);
+        Toolbar toolbar = (Toolbar) toolbarView;
+        toolbar.setBackgroundColor(getConfig().getToolbarColor());
+        setSupportActionBar(toolbar);
         // set toolbar function
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(getConfig().isShowHomeAsUpKey());
         }
-
-        // set compat status color in kitkat or later devices
-        ActivityConfig config = getConfig();
-        if (config.isFitSystemWindow() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            if (mSystemBarManager == null) {
-                mSystemBarManager = new SystemBarTintManager(this);
-            }
-            mSystemBarManager.setStatusBarTintEnabled(true);
-            mSystemBarManager.setTintColor(config.getToolbarColor());
-        }
-
         return null;
     }
 
@@ -300,8 +336,11 @@ public abstract class BaseActivity extends AppCompatActivity {
      * @param detach      if true will detach other fragment instead of hide.
      */
     public void setContainerFragment(Fragment fragment, @IdRes int containerId, boolean detach) {
-        if (fragment == null) {
+        if (fragment == null || fragment == mCurrentFragment) {
             return;
+        }
+        if (fragment instanceof BaseFragment) {
+            mCurrentFragment = (BaseFragment) fragment;
         }
 
         // get tag name
@@ -322,8 +361,14 @@ public abstract class BaseActivity extends AppCompatActivity {
                 if (oldFragment == null) {
                     continue;
                 }
-                if (oldFragment.isVisible()) {
+
+                if (tag.equals(oldFragment.getTag()) && fragment != oldFragment) {
                     transaction.hide(oldFragment);
+                    transaction.remove(oldFragment);
+                    transaction.detach(oldFragment);
+                } else if (oldFragment.isVisible()) {
+                    transaction.hide(oldFragment);
+                    oldFragment.setUserVisibleHint(false);
                     if (detach) {
                         transaction.detach(oldFragment);
                     }
@@ -337,14 +382,17 @@ public abstract class BaseActivity extends AppCompatActivity {
         }
         transaction.show(fragment);
         transaction.commitAllowingStateLoss();
+
+        // manually call setUserVisibleHint to notify it'll be visible soon.
+        fragment.setUserVisibleHint(true);
     }
 
     @ColorInt
-    protected int getCompatColor(@ColorRes int resId) {
+    public int getCompatColor(@ColorRes int resId) {
         return ContextCompat.getColor(this, resId);
     }
 
-    protected Drawable getCompatDrawable(@DrawableRes int resId) {
+    public Drawable getCompatDrawable(@DrawableRes int resId) {
         return ContextCompat.getDrawable(this, resId);
     }
 
@@ -355,11 +403,18 @@ public abstract class BaseActivity extends AppCompatActivity {
     /**
      * register controllers, so that BaseActivity can do some lifecycle work automatically
      */
-    protected void registerUiController(UiController controller) {
+    protected void registerUiControllers(UiController... controllers) {
+        if (controllers == null) {
+            Log.e(this, "controllers cannot be empty");
+            return;
+        }
         if (mUiControllers == null) {
             mUiControllers = new ArrayList<>();
         }
-        mUiControllers.add(controller);
+
+        for (int i = 0, s = controllers.length; i < s; i++) {
+            mUiControllers.add(controllers[i]);
+        }
     }
 
     protected void unregisterUiController(UiController uiController) {
@@ -382,6 +437,20 @@ public abstract class BaseActivity extends AppCompatActivity {
         }
     }
 
+    protected void registerEventBus(Object object) {
+        EventBus eventBus = EventBus.getDefault();
+        if (!eventBus.isRegistered(object)) {
+            eventBus.register(object);
+        }
+    }
+
+    protected void unregisterEventBus(Object object) {
+        EventBus eventBus = EventBus.getDefault();
+        if (eventBus.isRegistered(object)) {
+            eventBus.unregister(object);
+        }
+    }
+
     protected void postEvent(CustomEvent event, Class target) {
         EventBus.getDefault().post(event);
     }
@@ -394,6 +463,10 @@ public abstract class BaseActivity extends AppCompatActivity {
         return this;
     }
 
+    public BaseFragment getCurrentFragment() {
+        return mCurrentFragment;
+    }
+
     public ToolbarController getToolbarController() {
         return mToolbarController;
     }
@@ -403,7 +476,7 @@ public abstract class BaseActivity extends AppCompatActivity {
             unregisterUiController(mToolbarController);
         }
         mToolbarController = toolbarController;
-        registerUiController(mToolbarController);
+        registerUiControllers(mToolbarController);
     }
 
     public ToolbarController.Handler getCustomToolbarHandler() {
@@ -416,6 +489,28 @@ public abstract class BaseActivity extends AppCompatActivity {
 
     public void setBackKeyListener(BackKeyListener listener) {
         mBackKeyListener = listener;
+    }
+
+    public Observable<ActivityEvent> lifecycle() {
+        return lifecycleSubject.asObservable();
+    }
+
+    @Override
+    public <T> Observable.Transformer<T, T> bindUntilEvent(ActivityEvent event) {
+        return RxLifecycle.bindUntilActivityEvent(lifecycleSubject, event);
+    }
+
+    @Override
+    public <T> Observable.Transformer<T, T> bindToLifecycle() {
+        return RxLifecycle.bindActivity(lifecycleSubject);
+    }
+
+    protected <T> Observable.Transformer<T, T> io() {
+        return IOUtils.io();
+    }
+
+    protected <T> Observable.Transformer<T, T> computation() {
+        return IOUtils.computation();
     }
 
     /**

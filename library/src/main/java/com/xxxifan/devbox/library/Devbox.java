@@ -14,6 +14,7 @@ public class Devbox {
     public static final String EXTRA_DATA = "data";
     public static final String PREF_LAST_UPDATE = "last_update";
     public static final String PREF_READ_SET_TIP = "read_set_tip";
+    public static final String PREF_KEYBOARD_HEIGHT = "keyboard_height";
 
     private static Application sApplication;
     private static HandlerThread sWorkerThread;
